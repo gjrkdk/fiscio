@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Fiscio",
+    "slug": "fiscio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "fiscio",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563eb"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "nl.fiscio.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563eb"
+      },
+      "package": "nl.fiscio.app"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Fiscio gebruikt je locatie voor automatische ritregistratie."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Fiscio gebruikt de camera om bonnetjes te scannen."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
