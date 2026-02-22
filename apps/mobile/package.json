@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fiscio/api": "*",
     "@supabase/supabase-js": "^2.47.10",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",

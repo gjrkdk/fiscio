@@ -15,7 +15,4 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ]
 
-// Zorg dat react-native altijd uit de mobile app komt (één versie)
-config.resolver.disableHierarchicalLookup = true
-
 module.exports = config
