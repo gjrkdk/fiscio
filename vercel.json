@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx turbo run build --filter=web",
+  "buildCommand": "npx turbo run build --filter=@fiscio/web",
   "installCommand": "npm install",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
