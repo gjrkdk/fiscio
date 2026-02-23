@@ -9,6 +9,7 @@ const navItems = [
   { href: '/ritten', label: 'Ritten' },
   { href: '/kosten', label: 'Kosten' },
   { href: '/facturen', label: 'Facturen' },
+  { href: '/instellingen', label: 'Instellingen' },
 ]
 
 async function getUser() {
