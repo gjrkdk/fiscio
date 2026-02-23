@@ -59,10 +59,7 @@ TaskManager.defineTask(GPS_TASK, async ({ data, error }) => {
 
 export async function startTracking(description: string): Promise<void> {
   const { status: fg } = await Location.requestForegroundPermissionsAsync()
-  if (fg !== 'granted') throw new Error('Locatie-toegang geweigerd')
-
-  const { status: bg } = await Location.requestBackgroundPermissionsAsync()
-  if (bg !== 'granted') throw new Error('Achtergrond-locatie geweigerd — ga naar Instellingen')
+  if (fg !== 'granted') throw new Error('Locatie-toegang geweigerd. Ga naar Instellingen → Fiscio → Locatie.')
 
   // Storage leegmaken voor nieuwe rit
   await AsyncStorage.removeItem(COORDS_KEY)
@@ -70,17 +67,38 @@ export async function startTracking(description: string): Promise<void> {
   const meta: TripMeta = { startedAt: new Date().toISOString(), description }
   await AsyncStorage.setItem(TRIP_META_KEY, JSON.stringify(meta))
 
-  await Location.startLocationUpdatesAsync(GPS_TASK, {
-    accuracy: Location.Accuracy.High,
-    timeInterval: 5000,       // elke 5 seconden
-    distanceInterval: 10,     // of elke 10 meter
-    showsBackgroundLocationIndicator: true,
-    foregroundService: {
-      notificationTitle: 'Fiscio — Rit actief',
-      notificationBody: 'Ritregistratie loopt...',
-      notificationColor: '#2563eb',
-    },
-  })
+  // Probeer achtergrond-tracking (werkt in dev/prod build)
+  // In Expo Go valt dit terug op foreground watchPosition
+  try {
+    const { status: bg } = await Location.requestBackgroundPermissionsAsync()
+    if (bg === 'granted') {
+      await Location.startLocationUpdatesAsync(GPS_TASK, {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+        showsBackgroundLocationIndicator: true,
+        foregroundService: {
+          notificationTitle: 'Fiscio — Rit actief',
+          notificationBody: 'Ritregistratie loopt...',
+          notificationColor: '#2563eb',
+        },
+      })
+      return
+    }
+  } catch {
+    // Expo Go ondersteunt geen achtergrond-locatie — val terug op foreground
+  }
+
+  // Foreground fallback: sla elke locatie-update op in AsyncStorage
+  await Location.watchPositionAsync(
+    { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
+    async (loc) => {
+      const raw = await AsyncStorage.getItem(COORDS_KEY)
+      const coords: Coord[] = raw ? JSON.parse(raw) : []
+      coords.push({ lat: loc.coords.latitude, lon: loc.coords.longitude, ts: loc.timestamp })
+      await AsyncStorage.setItem(COORDS_KEY, JSON.stringify(coords))
+    }
+  )
 }
 
 export async function stopTracking(): Promise<{

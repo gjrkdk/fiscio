@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   Alert, ActivityIndicator, Modal, ScrollView, RefreshControl,
+  KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
@@ -272,37 +273,43 @@ export default function RittenScreen() {
 
       {/* Modal: rit starten */}
       <Modal visible={toonStartModal} transparent animationType="slide" onRequestClose={() => setToonStartModal(false)}>
-        <TouchableOpacity style={st.overlay} activeOpacity={1} onPress={() => setToonStartModal(false)} />
-        <View style={st.sheet}>
-          <View style={st.sheetHandle} />
-          <Text style={st.sheetTitle}>Rit starten</Text>
-          <Text style={st.inputLabel}>Waarheen / omschrijving</Text>
-          <TextInput
-            style={st.input}
-            placeholder="Bijv. Bezoek klant Amsterdam"
-            placeholderTextColor="#9ca3af"
-            value={startOmschrijving}
-            onChangeText={setStartOmschrijving}
-            autoFocus
-            returnKeyType="go"
-            onSubmitEditing={handleStart}
-          />
-          <TouchableOpacity
-            style={[st.primaryBtn, (!startOmschrijving.trim() || isStarting) && st.disabled]}
-            onPress={handleStart}
-            disabled={!startOmschrijving.trim() || isStarting}
-            activeOpacity={0.85}
-          >
-            {isStarting
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={st.primaryTxt}>📍  GPS-tracking starten</Text>
-            }
-          </TouchableOpacity>
-        </View>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <TouchableOpacity style={st.overlay} activeOpacity={1} onPress={() => setToonStartModal(false)} />
+          <View style={st.sheet}>
+            <View style={st.sheetHandle} />
+            <Text style={st.sheetTitle}>Rit starten</Text>
+            <Text style={st.inputLabel}>Waarheen / omschrijving</Text>
+            <TextInput
+              style={st.input}
+              placeholder="Bijv. Bezoek klant Amsterdam"
+              placeholderTextColor="#9ca3af"
+              value={startOmschrijving}
+              onChangeText={setStartOmschrijving}
+              autoFocus
+              returnKeyType="go"
+              onSubmitEditing={handleStart}
+            />
+            <TouchableOpacity
+              style={[st.primaryBtn, (!startOmschrijving.trim() || isStarting) && st.disabled]}
+              onPress={handleStart}
+              disabled={!startOmschrijving.trim() || isStarting}
+              activeOpacity={0.85}
+            >
+              {isStarting
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={st.primaryTxt}>📍  GPS-tracking starten</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal: rit opslaan */}
       <Modal visible={toonOpslaanModal} transparent animationType="slide" onRequestClose={() => {}}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={st.sheetFull}>
           <View style={st.sheetHandle} />
           <Text style={st.sheetTitle}>Rit opslaan</Text>
@@ -357,6 +364,7 @@ export default function RittenScreen() {
             <Text style={st.ghostTxt}>Weggooien</Text>
           </TouchableOpacity>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   )
