@@ -48,7 +48,7 @@ export async function ritToevoegen(formData: FormData) {
   const endedAt = new Date(date)
   endedAt.setHours(23, 59, 59)
 
-  await db.insert(trips).values({
+  const [nieuwRit] = await db.insert(trips).values({
     userId,
     description,
     startAddress,
@@ -58,7 +58,17 @@ export async function ritToevoegen(formData: FormData) {
     endedAt,
     isBusinessTrip,
     notes: notes ?? null,
-  })
+  }).returning({ id: trips.id })
+
+  // Auto-classificatie op de achtergrond (niet-blokkerend)
+  if (nieuwRit && process.env.OPENAI_API_KEY) {
+    try {
+      const { classificeerRit } = await import('./classificatieActions')
+      await classificeerRit(nieuwRit.id)
+    } catch {
+      // Classificatie mislukt? Geen probleem, gebruiker kan handmatig classificeren
+    }
+  }
 
   revalidatePath('/ritten')
 }

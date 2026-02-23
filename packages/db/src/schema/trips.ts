@@ -14,6 +14,9 @@ export const trips = pgTable('trips', {
   endedAt: timestamp('ended_at').notNull(),
   isBusinessTrip: boolean('is_business_trip').notNull().default(true),
   notes: text('notes'),
+  classifiedByAi: boolean('classified_by_ai').default(false),
+  aiReason: text('ai_reason'),
+  aiConfidence: decimal('ai_confidence', { precision: 3, scale: 2 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 

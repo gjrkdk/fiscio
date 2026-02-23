@@ -1,17 +1,14 @@
-import { desc, eq, sum } from 'drizzle-orm'
+import { desc, eq, sum, or, isNull } from 'drizzle-orm'
 import { trips } from '@fiscio/db'
 import { db } from '@/lib/db'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { RitToevoegenForm } from '@/components/ritten/RitToevoegenForm'
 import { RitVerwijderenButton } from '@/components/ritten/RitVerwijderenButton'
+import { RitClassificatieBadge, RitOverrideKnoppen, ClassificeerAllesKnop } from './RitClassificatie'
 
 function formatDatum(date: Date) {
-  return new Intl.DateTimeFormat('nl-NL', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
+  return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
 }
 
 function formatKm(km: string) {
@@ -24,30 +21,26 @@ export default async function RittenPage() {
   if (!user) redirect('/login')
 
   const [rittenLijst, totaalResult] = await Promise.all([
-    db
-      .select()
-      .from(trips)
-      .where(eq(trips.userId, user.id))
-      .orderBy(desc(trips.startedAt)),
-    db
-      .select({ totaal: sum(trips.distanceKm) })
-      .from(trips)
-      .where(eq(trips.userId, user.id)),
+    db.select().from(trips).where(eq(trips.userId, user.id)).orderBy(desc(trips.startedAt)),
+    db.select({ totaal: sum(trips.distanceKm) }).from(trips).where(eq(trips.userId, user.id)),
   ])
 
   const totaalKm = parseFloat(totaalResult[0]?.totaal ?? '0')
   const zakelijkeKm = rittenLijst
-    .filter((r) => r.isBusinessTrip)
+    .filter(r => r.isBusinessTrip)
     .reduce((sum, r) => sum + parseFloat(r.distanceKm), 0)
-
-  // Belastingdienst vergoeding: €0,23/km (2025)
   const vergoeding = zakelijkeKm * 0.23
+
+  const aantalOnbeoordeeld = rittenLijst.filter(r => !r.classifiedByAi).length
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Ritregistratie</h2>
-        <RitToevoegenForm />
+        <div className="flex items-center gap-3">
+          <ClassificeerAllesKnop aantalOnbeoordeeld={aantalOnbeoordeeld} />
+          <RitToevoegenForm />
+        </div>
       </div>
 
       {/* Statistieken */}
@@ -73,16 +66,15 @@ export default async function RittenPage() {
       </div>
 
       {/* Tabel */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="p-4 border-b border-gray-100">
-          <div className="grid grid-cols-[120px_1fr_1fr_80px_70px_80px] gap-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
-            <span>Datum</span>
-            <span>Omschrijving</span>
-            <span>Route</span>
-            <span>Km</span>
-            <span>Type</span>
-            <span></span>
-          </div>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 grid grid-cols-[110px_1fr_1fr_70px_160px_120px_40px] gap-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
+          <span>Datum</span>
+          <span>Omschrijving</span>
+          <span>Route</span>
+          <span>Km</span>
+          <span>Type</span>
+          <span>Overschrijven</span>
+          <span></span>
         </div>
 
         {rittenLijst.length === 0 ? (
@@ -91,10 +83,10 @@ export default async function RittenPage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {rittenLijst.map((rit) => (
+            {rittenLijst.map(rit => (
               <div
                 key={rit.id}
-                className="grid grid-cols-[120px_1fr_1fr_80px_70px_80px] gap-3 p-4 items-center hover:bg-gray-50 transition-colors"
+                className="grid grid-cols-[110px_1fr_1fr_70px_160px_120px_40px] gap-3 px-4 py-3 items-center hover:bg-gray-50 transition-colors"
               >
                 <span className="text-sm text-gray-600">{formatDatum(rit.startedAt)}</span>
                 <span className="text-sm font-medium text-gray-900 truncate">{rit.description}</span>
@@ -102,13 +94,14 @@ export default async function RittenPage() {
                   {rit.startAddress} → {rit.endAddress}
                 </span>
                 <span className="text-sm font-medium text-gray-900">{formatKm(rit.distanceKm)}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${
-                  rit.isBusinessTrip
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {rit.isBusinessTrip ? 'Zakelijk' : 'Privé'}
-                </span>
+                <RitClassificatieBadge
+                  ritId={rit.id}
+                  isZakelijk={rit.isBusinessTrip}
+                  classifiedByAi={rit.classifiedByAi ?? false}
+                  aiReason={rit.aiReason ?? null}
+                  aiConfidence={rit.aiConfidence ?? null}
+                />
+                <RitOverrideKnoppen ritId={rit.id} isZakelijk={rit.isBusinessTrip} />
                 <div className="flex justify-end">
                   <RitVerwijderenButton id={rit.id} />
                 </div>
