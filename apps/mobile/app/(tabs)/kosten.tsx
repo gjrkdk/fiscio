@@ -6,6 +6,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { API_URL } from '../../lib/config'
@@ -100,8 +101,8 @@ export default function KostenScreen() {
     }
 
     const result = bron === 'camera'
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1.0 })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1.0 })
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.9 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 })
 
     if (result.canceled || !result.assets[0]) return
     const asset = result.assets[0]
@@ -113,25 +114,30 @@ export default function KostenScreen() {
     if (!session?.user) return
     setScannen(true)
     try {
-      // Bestand ophalen als blob
-      const blob = await (await fetch(uri)).blob()
+      // Resize naar max 1500px breed voor OCR (voorkomt FUNCTION_PAYLOAD_TOO_LARGE)
+      const verkleind = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1500 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      )
 
       // Base64 genereren voor OCR (direct op device, geen roundtrip via storage)
+      const blob = await (await fetch(verkleind.uri)).blob()
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onloadend = () => {
           const result = reader.result as string
-          // Verwijder "data:...;base64," prefix
           resolve(result.split(',')[1] ?? '')
         }
         reader.onerror = reject
         reader.readAsDataURL(blob)
       })
 
-      // Tegelijk uploaden naar storage voor opslag
+      // Originele blob voor storage (hogere kwaliteit)
+      const origBlob = await (await fetch(uri)).blob()
       const ext = mimeType.split('/')[1] ?? 'jpg'
       const pad = `${session.user.id}/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('receipts').upload(pad, blob, { contentType: mimeType })
+      const { error } = await supabase.storage.from('receipts').upload(pad, origBlob, { contentType: mimeType })
       if (error) throw error
       setForm(f => ({ ...f, imageUrl: pad }))
 
@@ -143,7 +149,7 @@ export default function KostenScreen() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${supaSession?.access_token}`,
         },
-        body: JSON.stringify({ pad, base64, mimeType }),
+        body: JSON.stringify({ pad, base64, mimeType: 'image/jpeg' }),
       })
 
       const json = await res.json()
