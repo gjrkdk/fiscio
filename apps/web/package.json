@@ -13,6 +13,8 @@
     "@fiscio/api": "*",
     "@fiscio/db": "*",
     "@fiscio/ui": "*",
+    "drizzle-orm": "^0.38.3",
+    "postgres": "^3.4.5",
     "@supabase/supabase-js": "^2.47.10",
     "@supabase/ssr": "^0.5.2",
     "@trpc/client": "^11.0.0",
