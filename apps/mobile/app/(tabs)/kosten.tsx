@@ -80,22 +80,28 @@ export default function KostenScreen() {
 
   async function kiesFoto(bron: 'camera' | 'gallery') {
     if (bron === 'camera') {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync()
-      if (status !== 'granted') {
-        Alert.alert('Geen toegang', 'Geef Fiscio toegang tot de camera via je telefooninstellingen.')
+      const bestaand = await ImagePicker.getCameraPermissionsAsync()
+      const perm = bestaand.granted
+        ? bestaand
+        : await ImagePicker.requestCameraPermissionsAsync()
+      if (!perm.granted) {
+        Alert.alert('Geen cameratoegang', 'Ga naar Instellingen → Fiscio en zet Camera aan.')
         return
       }
     } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (status !== 'granted') {
-        Alert.alert('Geen toegang', 'Geef Fiscio toegang tot je fotobibliotheek via je telefooninstellingen.')
+      const bestaand = await ImagePicker.getMediaLibraryPermissionsAsync()
+      const perm = bestaand.granted
+        ? bestaand
+        : await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!perm.granted) {
+        Alert.alert('Geen toegang tot foto\'s', 'Ga naar Instellingen → Fiscio en zet Foto\'s aan.')
         return
       }
     }
 
     const result = bron === 'camera'
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 })
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaType.Images, quality: 0.7 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaType.Images, quality: 0.7 })
 
     if (result.canceled || !result.assets[0]) return
     const asset = result.assets[0]
