@@ -272,7 +272,7 @@ export default function RittenScreen() {
       </ScrollView>
 
       {/* Modal: rit starten */}
-      <Modal visible={toonStartModal} transparent animationType="fade" onRequestClose={() => setToonStartModal(false)}>
+      <Modal visible={toonStartModal} transparent animationType="none" onRequestClose={() => setToonStartModal(false)}>
         <KeyboardAvoidingView
           style={st.dialogWrap}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -310,7 +310,7 @@ export default function RittenScreen() {
       </Modal>
 
       {/* Modal: rit opslaan */}
-      <Modal visible={toonOpslaanModal} transparent animationType="fade" onRequestClose={() => {}}>
+      <Modal visible={toonOpslaanModal} transparent animationType="none" onRequestClose={() => {}}>
         <KeyboardAvoidingView style={st.dialogWrap} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={st.dialog}>
             <Text style={st.dialogTitle}>Rit opslaan</Text>
