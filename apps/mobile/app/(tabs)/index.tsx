@@ -57,7 +57,7 @@ export default function DashboardScreen() {
   const email = session?.user?.email ?? ''
 
   return (
-    <SafeAreaView style={st.safe} edges={['bottom']}>
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={st.scroll}>
         {/* Header */}
         <View style={st.header}>

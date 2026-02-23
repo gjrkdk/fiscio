@@ -159,7 +159,7 @@ export default function KostenScreen() {
   const totaalBtw = bonnen.reduce((s, b) => s + parseFloat(b.vat_amount ?? '0'), 0)
 
   return (
-    <SafeAreaView style={st.safe} edges={['bottom']}>
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
       <ScrollView
         contentContainerStyle={st.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); laadBonnen() }} />}

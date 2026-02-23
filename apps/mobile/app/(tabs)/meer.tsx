@@ -122,7 +122,7 @@ export default function MeerScreen() {
   }
 
   return (
-    <SafeAreaView style={st.safe} edges={['bottom']}>
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
       {/* Tabs */}
       <View style={st.tabBar}>
         {(['instellingen', 'klanten'] as const).map(t => (

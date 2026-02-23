@@ -73,7 +73,7 @@ export default function FacturenScreen() {
     .reduce((s, f) => s + parseFloat(f.total), 0)
 
   return (
-    <SafeAreaView style={st.safe} edges={['bottom']}>
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
       <ScrollView
         contentContainerStyle={st.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); laadFacturen() }} />}

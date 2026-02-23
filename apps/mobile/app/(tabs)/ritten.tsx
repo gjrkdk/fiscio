@@ -168,7 +168,7 @@ export default function RittenScreen() {
     .reduce((s, r) => s + parseFloat(r.distance_km), 0)
 
   return (
-    <SafeAreaView style={st.safe} edges={['bottom']}>
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
       {/* Actieve rit — full-screen banner */}
       {isActief && (
         <View style={st.activeBanner}>
