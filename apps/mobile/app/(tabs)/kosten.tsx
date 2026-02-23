@@ -131,18 +131,29 @@ export default function KostenScreen() {
         },
         body: JSON.stringify({ pad }),
       })
-      const { ocr } = await res.json()
-      if (ocr) {
+
+      const json = await res.json()
+      console.log('[OCR response]', res.status, JSON.stringify(json))
+
+      if (json.ocr) {
         setForm(f => ({
           ...f,
-          vendor: ocr.vendor ?? f.vendor,
-          amount: ocr.amount ?? f.amount,
-          vatRate: ocr.vatRate ?? f.vatRate,
-          receiptDate: ocr.receiptDate ?? f.receiptDate,
-          category: ocr.category ?? f.category,
-          description: ocr.description ?? f.description,
+          vendor: json.ocr.vendor ?? f.vendor,
+          amount: String(json.ocr.amount ?? f.amount),
+          vatRate: String(json.ocr.vatRate ?? f.vatRate),
+          receiptDate: json.ocr.receiptDate ?? f.receiptDate,
+          category: json.ocr.category ?? f.category,
+          description: json.ocr.description ?? f.description,
           imageUrl: pad,
         }))
+      } else {
+        // OCR mislukt maar foto is geüpload — handmatig invullen
+        const reden = json.error ?? 'Onbekende fout'
+        Alert.alert(
+          'AI scan niet gelukt',
+          `Foto geüpload ✓ — vul de velden handmatig in.\n\nReden: ${reden}`,
+          [{ text: 'OK' }]
+        )
       }
     } catch (e) {
       Alert.alert('Upload mislukt', e instanceof Error ? e.message : 'Probeer opnieuw')

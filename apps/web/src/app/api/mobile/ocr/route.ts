@@ -5,11 +5,12 @@ export async function POST(req: NextRequest) {
   // Valideer Bearer token
   const auth = req.headers.get('authorization')
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-  if (!token) return NextResponse.json({ error: 'Geen token' }, { status: 401 })
+  if (!token) return NextResponse.json({ error: 'Geen token', ocr: null }, { status: 401 })
 
   // Haal het opslagpad op uit de request body
-  const { pad } = await req.json()
-  if (!pad) return NextResponse.json({ error: 'Geen pad' }, { status: 400 })
+  const body = await req.json().catch(() => ({}))
+  const { pad } = body
+  if (!pad) return NextResponse.json({ error: 'Geen pad', ocr: null }, { status: 400 })
 
   // Verifieer token via Supabase
   const supabase = createClient(
@@ -17,26 +18,33 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   )
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Onbevoegd' }, { status: 401 })
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (!user) {
+    console.error('[OCR] Auth error:', authError)
+    return NextResponse.json({ error: 'Onbevoegd', ocr: null }, { status: 401 })
+  }
 
   // Controleer dat het pad bij deze gebruiker hoort
   if (!pad.startsWith(user.id + '/')) {
-    return NextResponse.json({ error: 'Geen toegang' }, { status: 403 })
+    return NextResponse.json({ error: 'Geen toegang tot dit bestand', ocr: null }, { status: 403 })
   }
 
   // Signed URL ophalen
-  const { data: signedData } = await supabase.storage
+  const { data: signedData, error: storageError } = await supabase.storage
     .from('receipts')
     .createSignedUrl(pad, 3600)
 
   if (!signedData?.signedUrl) {
-    return NextResponse.json({ error: 'Bestand niet gevonden' }, { status: 404 })
+    console.error('[OCR] Storage error:', storageError)
+    return NextResponse.json({ error: 'Bestand niet gevonden in storage', ocr: null }, { status: 404 })
   }
 
   // OCR via OpenAI Vision
   const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return NextResponse.json({ ocr: null })
+  if (!apiKey) {
+    console.warn('[OCR] OPENAI_API_KEY niet ingesteld')
+    return NextResponse.json({ error: 'OCR niet geconfigureerd', ocr: null })
+  }
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -60,13 +68,19 @@ Laat velden weg als ze niet leesbaar zijn.`,
       }),
     })
 
-    if (!response.ok) return NextResponse.json({ ocr: null })
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error('[OCR] OpenAI error:', response.status, errText)
+      return NextResponse.json({ error: `OpenAI fout: ${response.status}`, ocr: null })
+    }
+
     const json = await response.json()
     const raw = json.choices?.[0]?.message?.content ?? ''
     const match = raw.match(/\{[\s\S]*\}/)
     const ocr = match ? JSON.parse(match[0]) : null
     return NextResponse.json({ ocr })
-  } catch {
-    return NextResponse.json({ ocr: null })
+  } catch (e) {
+    console.error('[OCR] Exception:', e)
+    return NextResponse.json({ error: String(e), ocr: null })
   }
 }
