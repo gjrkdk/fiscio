@@ -42,6 +42,10 @@
         }
       ]
     ],
+    "extra": {
+      "supabaseUrl": "https://bxwauxudberjooyeprjy.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4d2F1eHVkYmVyam9veWVwcmp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NzAzNDMsImV4cCI6MjA4NzM0NjM0M30.2oqnYPvsdegSQ3gEuLjo9myjIOFRsDF6kFCNg_DvhKo"
+    },
     "experiments": {
       "typedRoutes": true
     }
