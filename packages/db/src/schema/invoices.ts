@@ -4,6 +4,7 @@ import { users } from './users'
 export type InvoiceLineItem = {
   description: string
   quantity: number
+  unit: string        // bijv. 'uur', 'stuk', 'dag', 'maand', 'km'
   unitPrice: number
   vatRate: number
 }

@@ -6,11 +6,14 @@ import { factuurAanmaken } from '../actions'
 type LineItem = {
   description: string
   quantity: number
+  unit: string
   unitPrice: number
   vatRate: number
 }
 
-const EMPTY_ITEM: LineItem = { description: '', quantity: 1, unitPrice: 0, vatRate: 21 }
+const UNITS = ['uur', 'dag', 'stuk', 'maand', 'km', 'vast']
+
+const EMPTY_ITEM: LineItem = { description: '', quantity: 1, unit: 'uur', unitPrice: 0, vatRate: 21 }
 
 function euro(n: number) {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n)
@@ -118,9 +121,10 @@ export function NieuwFactuurForm() {
         <div className="space-y-2 mb-3">
           {/* Header */}
           <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 px-1">
-            <span className="col-span-5">Omschrijving</span>
-            <span className="col-span-2 text-right">Aantal</span>
-            <span className="col-span-2 text-right">Prijs</span>
+            <span className="col-span-4">Omschrijving</span>
+            <span className="col-span-1 text-right">Aantal</span>
+            <span className="col-span-2">Eenheid</span>
+            <span className="col-span-2 text-right">Tarief</span>
             <span className="col-span-2 text-right">BTW</span>
             <span className="col-span-1"></span>
           </div>
@@ -132,14 +136,21 @@ export function NieuwFactuurForm() {
                 onChange={e => updateItem(i, 'description', e.target.value)}
                 placeholder="Dienst of product"
                 required
-                className="col-span-5 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="col-span-4 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 type="number" min="0.01" step="0.01"
                 value={item.quantity || ''}
                 onChange={e => updateItem(i, 'quantity', +e.target.value)}
-                className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="col-span-1 px-2 py-2 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <select
+                value={item.unit}
+                onChange={e => updateItem(i, 'unit', e.target.value)}
+                className="col-span-2 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
               <div className="col-span-2 relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">€</span>
                 <input

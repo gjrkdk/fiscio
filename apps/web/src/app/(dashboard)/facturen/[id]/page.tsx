@@ -98,7 +98,8 @@ export default async function FactuurDetailPage({ params }: { params: Promise<{ 
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-2 text-gray-700">Omschrijving</th>
               <th className="text-right py-2 text-gray-700">Aantal</th>
-              <th className="text-right py-2 text-gray-700">Prijs</th>
+              <th className="text-left py-2 pl-2 text-gray-700">Eenh.</th>
+              <th className="text-right py-2 text-gray-700">Tarief</th>
               <th className="text-right py-2 text-gray-700">BTW</th>
               <th className="text-right py-2 text-gray-700">Totaal</th>
             </tr>
@@ -110,6 +111,7 @@ export default async function FactuurDetailPage({ params }: { params: Promise<{ 
                 <tr key={i}>
                   <td className="py-2.5 text-gray-900">{item.description}</td>
                   <td className="py-2.5 text-right text-gray-600">{item.quantity}</td>
+                  <td className="py-2.5 pl-2 text-gray-500 text-xs">{item.unit ?? 'stuk'}</td>
                   <td className="py-2.5 text-right font-mono text-gray-600">{euro(item.unitPrice)}</td>
                   <td className="py-2.5 text-right text-gray-500">{item.vatRate}%</td>
                   <td className="py-2.5 text-right font-mono font-medium text-gray-900">{euro(lineTotal)}</td>

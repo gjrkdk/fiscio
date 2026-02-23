@@ -81,7 +81,8 @@ export function FactuurPDF({ factuur, profiel }: Props) {
         <View style={styles.tableHeader}>
           <Text style={[styles.colDesc, styles.headerText]}>Omschrijving</Text>
           <Text style={[styles.colNum, styles.headerText]}>Aantal</Text>
-          <Text style={[styles.colMono, styles.headerText]}>Prijs</Text>
+          <Text style={[styles.colNum, styles.headerText]}>Eenh.</Text>
+          <Text style={[styles.colMono, styles.headerText]}>Tarief</Text>
           <Text style={[styles.colNum, styles.headerText]}>BTW</Text>
           <Text style={[styles.colMono, styles.headerText]}>Totaal</Text>
         </View>
@@ -92,6 +93,7 @@ export function FactuurPDF({ factuur, profiel }: Props) {
             <View key={i} style={styles.tableRow}>
               <Text style={styles.colDesc}>{item.description}</Text>
               <Text style={styles.colNum}>{item.quantity}</Text>
+              <Text style={styles.colNum}>{item.unit ?? 'stuk'}</Text>
               <Text style={styles.colMono}>{euro(item.unitPrice)}</Text>
               <Text style={styles.colNum}>{item.vatRate}%</Text>
               <Text style={[styles.colMono, { fontFamily: 'Helvetica-Bold' }]}>{euro(lineTotal)}</Text>
