@@ -272,15 +272,14 @@ export default function RittenScreen() {
       </ScrollView>
 
       {/* Modal: rit starten */}
-      <Modal visible={toonStartModal} transparent animationType="slide" onRequestClose={() => setToonStartModal(false)}>
+      <Modal visible={toonStartModal} transparent animationType="fade" onRequestClose={() => setToonStartModal(false)}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={st.dialogWrap}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <TouchableOpacity style={st.overlay} activeOpacity={1} onPress={() => setToonStartModal(false)} />
-          <View style={st.sheet}>
-            <View style={st.sheetHandle} />
-            <Text style={st.sheetTitle}>Rit starten</Text>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setToonStartModal(false)} />
+          <View style={st.dialog}>
+            <Text style={st.dialogTitle}>Rit starten</Text>
             <Text style={st.inputLabel}>Waarheen / omschrijving</Text>
             <TextInput
               style={st.input}
@@ -303,67 +302,69 @@ export default function RittenScreen() {
                 : <Text style={st.primaryTxt}>📍  GPS-tracking starten</Text>
               }
             </TouchableOpacity>
+            <TouchableOpacity style={st.ghostBtn} onPress={() => setToonStartModal(false)}>
+              <Text style={st.ghostTxt}>Annuleren</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal: rit opslaan */}
-      <Modal visible={toonOpslaanModal} transparent animationType="slide" onRequestClose={() => {}}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={st.sheetFull}>
-          <View style={st.sheetHandle} />
-          <Text style={st.sheetTitle}>Rit opslaan</Text>
+      <Modal visible={toonOpslaanModal} transparent animationType="fade" onRequestClose={() => {}}>
+        <KeyboardAvoidingView style={st.dialogWrap} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={st.dialog}>
+            <Text style={st.dialogTitle}>Rit opslaan</Text>
 
-          {eindResultaat && (
-            <View style={st.eindStats}>
-              <View style={st.eindItem}>
-                <Text style={st.eindVal}>{eindResultaat.distanceKm.toFixed(2)} km</Text>
-                <Text style={st.eindLbl}>Afstand</Text>
+            {eindResultaat && (
+              <View style={st.eindStats}>
+                <View style={st.eindItem}>
+                  <Text style={st.eindVal}>{eindResultaat.distanceKm.toFixed(2)} km</Text>
+                  <Text style={st.eindLbl}>Afstand</Text>
+                </View>
+                <View style={st.eindSep} />
+                <View style={st.eindItem}>
+                  <Text style={st.eindVal}>{formatDuur(eindResultaat.duurSec)}</Text>
+                  <Text style={st.eindLbl}>Duur</Text>
+                </View>
               </View>
-              <View style={st.eindSep} />
-              <View style={st.eindItem}>
-                <Text style={st.eindVal}>{formatDuur(eindResultaat.duurSec)}</Text>
-                <Text style={st.eindLbl}>Duur</Text>
-              </View>
-            </View>
-          )}
+            )}
 
-          <Text style={st.inputLabel}>Vertrekadres</Text>
-          <TextInput
-            style={st.input}
-            placeholder="Bijv. Thuis, Utrecht"
-            placeholderTextColor="#9ca3af"
-            value={startAdres}
-            onChangeText={setStartAdres}
-          />
+            <Text style={st.inputLabel}>Vertrekadres</Text>
+            <TextInput
+              style={st.input}
+              placeholder="Bijv. Thuis, Utrecht"
+              placeholderTextColor="#9ca3af"
+              value={startAdres}
+              onChangeText={setStartAdres}
+            />
 
-          <Text style={st.inputLabel}>Aankomstadres</Text>
-          <TextInput
-            style={st.input}
-            placeholder="Bijv. Keizersgracht 1, Amsterdam"
-            placeholderTextColor="#9ca3af"
-            value={eindAdres}
-            onChangeText={setEindAdres}
-          />
+            <Text style={st.inputLabel}>Aankomstadres</Text>
+            <TextInput
+              style={st.input}
+              placeholder="Bijv. Keizersgracht 1, Amsterdam"
+              placeholderTextColor="#9ca3af"
+              value={eindAdres}
+              onChangeText={setEindAdres}
+            />
 
-          <TouchableOpacity
-            style={[st.primaryBtn, isSaving && st.disabled]}
-            onPress={handleOpslaan}
-            disabled={isSaving}
-            activeOpacity={0.85}
-          >
-            {isSaving
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={st.primaryTxt}>Opslaan</Text>
-            }
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={st.ghostBtn}
-            onPress={() => { setToonOpslaanModal(false); setEindResultaat(null) }}
-          >
-            <Text style={st.ghostTxt}>Weggooien</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[st.primaryBtn, isSaving && st.disabled]}
+              onPress={handleOpslaan}
+              disabled={isSaving}
+              activeOpacity={0.85}
+            >
+              {isSaving
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={st.primaryTxt}>Opslaan</Text>
+              }
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={st.ghostBtn}
+              onPress={() => { setToonOpslaanModal(false); setEindResultaat(null) }}
+            >
+              <Text style={st.ghostTxt}>Weggooien</Text>
+            </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
@@ -445,23 +446,18 @@ const st = StyleSheet.create({
   badgeZtxt: { color: BLUE },
   badgePtxt: { color: GRAY },
 
-  // Sheets / modals
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: {
-    backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40,
-    position: 'absolute', bottom: 0, left: 0, right: 0,
+  // Dialogs (gecentreerd)
+  dialogWrap: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 24,
   },
-  sheetFull: {
-    backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 48,
-    position: 'absolute', bottom: 0, left: 0, right: 0,
+  dialog: {
+    backgroundColor: '#fff', borderRadius: 20, padding: 24,
+    width: '100%', maxWidth: 400,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15, shadowRadius: 24, elevation: 10,
   },
-  sheetHandle: {
-    width: 40, height: 4, borderRadius: 2, backgroundColor: '#d1d5db',
-    alignSelf: 'center', marginBottom: 20,
-  },
-  sheetTitle: { fontSize: 20, fontWeight: '700', color: DARK, marginBottom: 20 },
+  dialogTitle: { fontSize: 20, fontWeight: '700', color: DARK, marginBottom: 20 },
   inputLabel: { fontSize: 13, fontWeight: '500', color: '#374151', marginBottom: 6 },
   input: {
     borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 12,
