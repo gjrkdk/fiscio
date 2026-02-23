@@ -1,5 +1,5 @@
-import { eq, sum, and, gte } from 'drizzle-orm'
-import { trips } from '@fiscio/db'
+import { eq, sum, and, gte, count } from 'drizzle-orm'
+import { trips, invoices } from '@fiscio/db'
 import { db } from '@/lib/db'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -32,7 +32,38 @@ export default async function DashboardPage() {
     ))
 
   const kmTotaal = parseFloat(kmJaar?.totaal ?? '0') || 0
+
+  // Omzet dit jaar (betaald + verzonden)
+  const [omzetJaar] = await db
+    .select({ totaal: sum(invoices.total) })
+    .from(invoices)
+    .where(and(
+      eq(invoices.userId, user.id),
+      gte(invoices.createdAt, startOfYear),
+    ))
+
+  // Omzet deze maand
+  const [omzetMaand] = await db
+    .select({ totaal: sum(invoices.total) })
+    .from(invoices)
+    .where(and(
+      eq(invoices.userId, user.id),
+      gte(invoices.createdAt, startOfMonth),
+    ))
+
+  // Openstaande facturen
+  const [openstaand] = await db
+    .select({ aantal: count() })
+    .from(invoices)
+    .where(and(
+      eq(invoices.userId, user.id),
+      eq(invoices.status, 'sent'),
+    ))
+
   const maandNaam = now.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
+  const omzetJaarVal = parseFloat(omzetJaar?.totaal ?? '0') || 0
+  const omzetMaandVal = parseFloat(omzetMaand?.totaal ?? '0') || 0
+  const aantalOpenstaand = openstaand?.aantal ?? 0
 
   const stats = [
     {
@@ -42,18 +73,18 @@ export default async function DashboardPage() {
     },
     {
       label: 'Omzet dit jaar',
-      value: '€ —',
-      sub: 'facturen volgen',
+      value: omzetJaarVal > 0 ? euro(omzetJaarVal) : '€ —',
+      sub: 'gefactureerd',
     },
     {
       label: `Omzet ${maandNaam}`,
-      value: '€ —',
-      sub: 'facturen volgen',
+      value: omzetMaandVal > 0 ? euro(omzetMaandVal) : '€ —',
+      sub: 'gefactureerd',
     },
     {
       label: 'Openstaande facturen',
-      value: '—',
-      sub: 'facturen volgen',
+      value: aantalOpenstaand > 0 ? String(aantalOpenstaand) : '—',
+      sub: aantalOpenstaand > 0 ? 'nog te ontvangen' : 'geen openstaand',
     },
   ]
 
