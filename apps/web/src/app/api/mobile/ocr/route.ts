@@ -74,17 +74,27 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        max_tokens: 300,
+        max_tokens: 400,
         messages: [{
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `Analyseer dit bonnetje en geef ALLEEN een JSON-object terug:
-{"vendor":"naam leverancier","amount":"bedrag excl BTW als getal","vatRate":"0, 9 of 21","receiptDate":"YYYY-MM-DD","category":"kantoor|reizen|software|maaltijden|abonnement|overig","description":"korte omschrijving"}
-Laat velden weg als ze niet leesbaar zijn.`,
+              text: `Je bent een expert in het lezen van Nederlandse kassabonnen en facturen.
+Analyseer de afbeelding zorgvuldig en geef ALLEEN een geldig JSON-object terug, zonder uitleg of markdown.
+
+Regels:
+- "vendor": naam van de winkel of leverancier (exact zoals op het bon staat)
+- "amount": het bedrag EXCLUSIEF BTW als decimaal getal (bijv. 8.26). Als alleen incl. BTW staat: deel door 1.21 (21%), 1.09 (9%) of laat ongewijzigd (0%)
+- "vatRate": BTW-tarief als getal: 0, 9 of 21. Supermarkt/horeca = meestal 9, zakelijk/software = 21
+- "receiptDate": datum in YYYY-MM-DD formaat (zoek naar datum op het bon)
+- "category": kies uit: kantoor, reizen, software, maaltijden, abonnement, overig
+- "description": korte omschrijving van wat er gekocht is (max 60 tekens)
+
+Laat een veld weg als het niet leesbaar of niet aanwezig is.
+Geef ALLEEN het JSON-object terug, niets anders.`,
             },
-            { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
+            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
           ],
         }],
       }),
