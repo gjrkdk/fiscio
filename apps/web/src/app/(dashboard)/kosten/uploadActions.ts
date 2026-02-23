@@ -52,6 +52,14 @@ export async function bonFotoVerwerken(formData: FormData): Promise<FotoVerwerkR
   }
 
   try {
+    // Afbeelding downloaden en naar base64 omzetten (signed URL niet bereikbaar voor OpenAI)
+    const imgRes = await fetch(signedData.signedUrl)
+    if (!imgRes.ok) return { imageUrl, ocr: null, ocrRaw: null }
+    const imgBuffer = await imgRes.arrayBuffer()
+    const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+    const base64 = Buffer.from(imgBuffer).toString('base64')
+    const dataUrl = `data:${contentType};base64,${base64}`
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -75,7 +83,7 @@ Formaat:
 }
 Als een veld niet leesbaar is, laat het dan weg uit de JSON.`,
             },
-            { type: 'image_url', image_url: { url: signedData.signedUrl, detail: 'low' } },
+            { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
           ],
         }],
       }),

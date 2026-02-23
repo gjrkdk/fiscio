@@ -47,6 +47,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Afbeelding downloaden en naar base64 omzetten (signed URL is niet bereikbaar voor OpenAI)
+    const imgRes = await fetch(signedData.signedUrl)
+    if (!imgRes.ok) {
+      return NextResponse.json({ error: `Afbeelding downloaden mislukt: ${imgRes.status}`, ocr: null })
+    }
+    const imgBuffer = await imgRes.arrayBuffer()
+    const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+    const base64 = Buffer.from(imgBuffer).toString('base64')
+    const dataUrl = `data:${contentType};base64,${base64}`
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -62,7 +72,7 @@ export async function POST(req: NextRequest) {
 {"vendor":"naam leverancier","amount":"bedrag excl BTW als getal","vatRate":"0, 9 of 21","receiptDate":"YYYY-MM-DD","category":"kantoor|reizen|software|maaltijden|abonnement|overig","description":"korte omschrijving"}
 Laat velden weg als ze niet leesbaar zijn.`,
             },
-            { type: 'image_url', image_url: { url: signedData.signedUrl, detail: 'low' } },
+            { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
           ],
         }],
       }),
