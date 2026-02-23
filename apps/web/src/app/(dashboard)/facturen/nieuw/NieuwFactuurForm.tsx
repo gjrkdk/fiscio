@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { factuurAanmaken } from '../actions'
+import type { Client } from '@fiscio/db'
 
 type LineItem = {
   description: string
@@ -40,7 +41,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Field({ label, name, type = 'text', placeholder, required, defaultValue }: {
   label: string; name: string; type?: string
-  placeholder?: string; required?: boolean; defaultValue?: string
+  placeholder?: string; required?: boolean; defaultValue?: string | null | undefined
 }) {
   return (
     <div>
@@ -49,16 +50,24 @@ function Field({ label, name, type = 'text', placeholder, required, defaultValue
       </label>
       <input
         name={name} type={type} required={required}
-        placeholder={placeholder} defaultValue={defaultValue}
+        placeholder={placeholder} defaultValue={defaultValue ?? ''}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   )
 }
 
-export function NieuwFactuurForm() {
+type Props = { klanten?: Client[] }
+
+export function NieuwFactuurForm({ klanten = [] }: Props) {
   const [isPending, startTransition] = useTransition()
   const [items, setItems] = useState<LineItem[]>([{ ...EMPTY_ITEM }])
+  const [selectedKlant, setSelectedKlant] = useState<Client | null>(null)
+
+  function selecteerKlant(id: string) {
+    const klant = klanten.find(k => k.id === id) ?? null
+    setSelectedKlant(klant)
+  }
 
   const today = new Date().toISOString().split('T')[0]!
   const in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]!
@@ -84,16 +93,36 @@ export function NieuwFactuurForm() {
 
   return (
     <form action={handleSubmit} className="space-y-5">
-      {/* Klantgegevens */}
-      <Section title="Klantgegevens">
-        <Field label="Bedrijfs- of klantnaam" name="clientName" required placeholder="Acme BV" />
+      {/* Klantgegevens — key forceert re-render bij klant-selectie */}
+      <Section title="Klantgegevens" key={selectedKlant?.id ?? 'manual'}>
+        {klanten.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Opgeslagen klant</label>
+            <select
+              onChange={e => selecteerKlant(e.target.value)}
+              defaultValue=""
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">— Selecteer klant of vul handmatig in —</option>
+              {klanten.map(k => (
+                <option key={k.id} value={k.id}>{k.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <Field label="Bedrijfs- of klantnaam" name="clientName" required placeholder="Acme BV"
+          defaultValue={selectedKlant?.name} />
         <div className="grid grid-cols-2 gap-4">
-          <Field label="E-mailadres" name="clientEmail" type="email" placeholder="factuur@klant.nl" />
-          <Field label="KVK-nummer" name="clientKvk" placeholder="12345678" />
+          <Field label="E-mailadres" name="clientEmail" type="email" placeholder="factuur@klant.nl"
+            defaultValue={selectedKlant?.email} />
+          <Field label="KVK-nummer" name="clientKvk" placeholder="12345678"
+            defaultValue={selectedKlant?.kvkNumber} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="BTW-nummer" name="clientBtw" placeholder="NL123456789B01" />
-          <Field label="Adres" name="clientAddress" placeholder="Hoofdstraat 1, Amsterdam" />
+          <Field label="BTW-nummer" name="clientBtw" placeholder="NL123456789B01"
+            defaultValue={selectedKlant?.btwNumber} />
+          <Field label="Adres" name="clientAddress" placeholder="Hoofdstraat 1, Amsterdam"
+            defaultValue={selectedKlant?.address} />
         </div>
       </Section>
 

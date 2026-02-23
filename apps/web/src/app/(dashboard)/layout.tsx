@@ -9,6 +9,7 @@ const navItems = [
   { href: '/ritten', label: 'Ritten' },
   { href: '/kosten', label: 'Kosten' },
   { href: '/facturen', label: 'Facturen' },
+  { href: '/klanten', label: 'Klanten' },
   { href: '/btw', label: 'BTW-aangifte' },
   { href: '/instellingen', label: 'Instellingen' },
 ]
