@@ -4,3 +4,8 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+# Lokale omgevingsvariabelen — nooit committen
+.env
+.env.local
+.env*.local
