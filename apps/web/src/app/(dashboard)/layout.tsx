@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+import { logout } from '@/app/(auth)/login/actions'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -7,11 +10,33 @@ const navItems = [
   { href: '/facturen', label: 'Facturen' },
 ]
 
-export default function DashboardLayout({
+async function getUser() {
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+    process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const user = await getUser()
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -19,6 +44,7 @@ export default function DashboardLayout({
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-xl font-bold text-blue-600">Fiscio</h1>
         </div>
+
         <nav className="flex-1 p-3 space-y-1">
           {navItems.map((item) => (
             <Link
@@ -30,6 +56,21 @@ export default function DashboardLayout({
             </Link>
           ))}
         </nav>
+
+        {/* Gebruiker + uitloggen */}
+        <div className="p-3 border-t border-gray-200">
+          <p className="text-xs text-gray-400 truncate px-3 mb-1">
+            {user?.email}
+          </p>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Uitloggen
+            </button>
+          </form>
+        </div>
       </aside>
 
       {/* Main content */}
