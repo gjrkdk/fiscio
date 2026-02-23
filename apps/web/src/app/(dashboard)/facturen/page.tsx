@@ -82,7 +82,16 @@ export default async function FacturenPage() {
                     <td className="px-4 py-3 text-gray-500">{datum}</td>
                     <td className={`px-4 py-3 ${isVervallen ? 'text-red-500 font-medium' : 'text-gray-500'}`}>{verval}</td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">{euro(f.total)}</td>
-                    <td className="px-4 py-3"><StatusBadge status={f.status} /></td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <StatusBadge status={f.status} />
+                        {f.reminderSentAt && (
+                          <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full whitespace-nowrap" title={`Herinnering verstuurd op ${new Date(f.reminderSentAt).toLocaleDateString('nl-NL')}`}>
+                            🔔 herinnering
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/facturen/${f.id}`}

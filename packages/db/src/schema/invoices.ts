@@ -28,6 +28,7 @@ export const invoices = pgTable('invoices', {
   dueDate: timestamp('due_date'),
   sentAt: timestamp('sent_at'),
   paidAt: timestamp('paid_at'),
+  reminderSentAt: timestamp('reminder_sent_at'),
   peppolSentAt: timestamp('peppol_sent_at'),
   lineItems: jsonb('line_items').$type<InvoiceLineItem[]>().notNull(),
   notes: text('notes'),

@@ -58,7 +58,7 @@ export default async function FactuurDetailPage({ params }: { params: Promise<{ 
           >
             ↓ PDF
           </a>
-          <FactuurActies factuurId={factuur.id} status={factuur.status} clientEmail={factuur.clientEmail} />
+          <FactuurActies factuurId={factuur.id} status={factuur.status} clientEmail={factuur.clientEmail} reminderSentAt={factuur.reminderSentAt} />
         </div>
       </div>
 

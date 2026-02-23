@@ -98,3 +98,77 @@ export async function factuurEmailVersturen(factuurId: string) {
   revalidatePath(`/facturen/${factuurId}`)
   revalidatePath('/facturen')
 }
+
+export async function factuurHerinneringVersturen(factuurId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Niet ingelogd')
+
+  const [factuur] = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.id, factuurId), eq(invoices.userId, user.id)))
+    .limit(1)
+
+  if (!factuur) throw new Error('Factuur niet gevonden')
+  if (!factuur.clientEmail) throw new Error('Klant heeft geen e-mailadres')
+  if (factuur.status !== 'sent') throw new Error('Alleen verzonden facturen kunnen een herinnering ontvangen')
+
+  const [profiel] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1)
+
+  const apiKey = process.env['RESEND_API_KEY']
+  if (!apiKey) throw new Error('RESEND_API_KEY niet geconfigureerd')
+
+  const fromEmail = process.env['RESEND_FROM_EMAIL'] ?? 'facturen@fiscio.app'
+  const afzenderNaam = profiel?.companyName ?? profiel?.fullName ?? 'Fiscio'
+  const bedrag = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' })
+    .format(parseFloat(factuur.total ?? '0'))
+  const verstuurdOp = factuur.sentAt
+    ? new Date(factuur.sentAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '-'
+  const verval = factuur.dueDate
+    ? new Date(factuur.dueDate).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+
+  const resend = new Resend(apiKey)
+
+  await resend.emails.send({
+    from: `${afzenderNaam} <${fromEmail}>`,
+    to: factuur.clientEmail,
+    subject: `Betalingsherinnering — Factuur ${factuur.invoiceNumber}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+        <h2 style="color: #2563eb;">Betalingsherinnering</h2>
+        <p>Beste ${factuur.clientName},</p>
+        <p>Hierbij attenderen wij je vriendelijk op onderstaande openstaande factuur,
+           die op <strong>${verstuurdOp}</strong> is verstuurd en nog niet is voldaan.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
+          <tr style="background: #f9fafb;">
+            <td style="padding: 12px; border: 1px solid #e5e7eb;">Factuurnummer</td>
+            <td style="padding: 12px; border: 1px solid #e5e7eb;"><strong>${factuur.invoiceNumber}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #e5e7eb;">Openstaand bedrag</td>
+            <td style="padding: 12px; border: 1px solid #e5e7eb;"><strong style="color: #dc2626;">${bedrag}</strong></td>
+          </tr>
+          ${verval ? `<tr style="background: #f9fafb;"><td style="padding: 12px; border: 1px solid #e5e7eb;">Vervaldatum</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${verval}</td></tr>` : ''}
+          ${profiel?.iban ? `<tr><td style="padding: 12px; border: 1px solid #e5e7eb;">IBAN</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${profiel.iban}</td></tr>` : ''}
+        </table>
+        <p>Mocht je de betaling al hebben voldaan, dan kun je deze herinnering uiteraard negeren.</p>
+        <p>Met vriendelijke groet,<br/><strong>${afzenderNaam}</strong></p>
+      </div>
+    `,
+  })
+
+  await db
+    .update(invoices)
+    .set({ reminderSentAt: new Date(), updatedAt: new Date() })
+    .where(eq(invoices.id, factuurId))
+
+  revalidatePath(`/facturen/${factuurId}`)
+  revalidatePath('/facturen')
+}

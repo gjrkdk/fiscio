@@ -2,5 +2,11 @@
   "buildCommand": "npx turbo run build --filter=@fiscio/web",
   "installCommand": "npm install",
   "outputDirectory": "apps/web/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/factuur-herinnering",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }

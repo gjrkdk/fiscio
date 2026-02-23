@@ -2,13 +2,13 @@
 
 import { useTransition, useState } from 'react'
 import { factuurStatusUpdaten, factuurVerwijderen } from '../actions'
-import { factuurEmailVersturen } from './emailActions'
+import { factuurEmailVersturen, factuurHerinneringVersturen } from './emailActions'
 
-type Props = { factuurId: string; status: string; clientEmail?: string | null }
+type Props = { factuurId: string; status: string; clientEmail?: string | null; reminderSentAt?: Date | null }
 
-export function FactuurActies({ factuurId, status, clientEmail }: Props) {
+export function FactuurActies({ factuurId, status, clientEmail, reminderSentAt }: Props) {
   const [isPending, startTransition] = useTransition()
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'ok' | 'error'>('idle')
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'ok' | 'error' | 'reminder-ok'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
   function verstuurEmail() {
@@ -24,9 +24,22 @@ export function FactuurActies({ factuurId, status, clientEmail }: Props) {
     })
   }
 
+  function verstuurHerinnering() {
+    setEmailStatus('idle')
+    startTransition(async () => {
+      try {
+        await factuurHerinneringVersturen(factuurId)
+        setEmailStatus('reminder-ok')
+      } catch (e) {
+        setEmailStatus('error')
+        setErrorMsg(e instanceof Error ? e.message : 'Onbekende fout')
+      }
+    })
+  }
+
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap justify-end">
         {/* E-mail versturen */}
         {clientEmail && status !== 'paid' && (
           <button
@@ -35,6 +48,18 @@ export function FactuurActies({ factuurId, status, clientEmail }: Props) {
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
             {isPending ? 'Versturen...' : '✉ Verstuur per e-mail'}
+          </button>
+        )}
+
+        {/* Betalingsherinnering */}
+        {clientEmail && status === 'sent' && (
+          <button
+            onClick={verstuurHerinnering}
+            disabled={isPending}
+            className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-colors"
+            title={reminderSentAt ? `Laatste herinnering: ${new Date(reminderSentAt).toLocaleDateString('nl-NL')}` : 'Stuur betalingsherinnering'}
+          >
+            {isPending ? 'Versturen...' : `🔔 ${reminderSentAt ? 'Herinnering opnieuw' : 'Stuur herinnering'}`}
           </button>
         )}
 
@@ -70,6 +95,9 @@ export function FactuurActies({ factuurId, status, clientEmail }: Props) {
 
       {emailStatus === 'ok' && (
         <p className="text-sm text-green-600">✓ Factuur verstuurd naar {clientEmail}</p>
+      )}
+      {emailStatus === 'reminder-ok' && (
+        <p className="text-sm text-amber-600">🔔 Herinnering verstuurd naar {clientEmail}</p>
       )}
       {emailStatus === 'error' && (
         <p className="text-sm text-red-500">✗ {errorMsg}</p>
