@@ -43,6 +43,9 @@ export async function bonToevoegen(formData: FormData) {
   const { vendor, amount, vatRate, category, description, receiptDate } = parsed.data
   const vatAmount = +(amount * vatRate / 100).toFixed(2)
 
+  const imageUrl = (formData.get('imageUrl') as string) || null
+  const ocrRaw = (formData.get('ocrRaw') as string) || null
+
   await db.insert(receipts).values({
     userId,
     vendor,
@@ -52,6 +55,8 @@ export async function bonToevoegen(formData: FormData) {
     category,
     description: description ?? null,
     receiptDate: new Date(receiptDate),
+    imageUrl,
+    ocrData: ocrRaw ? JSON.parse(ocrRaw) : null,
   })
 
   revalidatePath('/kosten')

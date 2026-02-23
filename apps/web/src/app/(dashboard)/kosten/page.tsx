@@ -87,6 +87,7 @@ export default async function KostenPage() {
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Excl. BTW</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">BTW</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Incl. BTW</th>
+                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">Foto</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -114,6 +115,21 @@ export default async function KostenPage() {
                       <span className="text-xs text-gray-400 ml-1">({bon.vatRate}%)</span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">{euro(incl.toString())}</td>
+                    <td className="px-4 py-3 text-center">
+                      {bon.imageUrl ? (
+                        <a
+                          href={`/api/kosten/foto?pad=${encodeURIComponent(bon.imageUrl)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700 text-base"
+                          title="Bonnetje bekijken"
+                        >
+                          🧾
+                        </a>
+                      ) : (
+                        <span className="text-gray-300 text-base">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <BonVerwijderenKnop id={bon.id} />
                     </td>
