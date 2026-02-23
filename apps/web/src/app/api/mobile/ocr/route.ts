@@ -53,9 +53,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Afbeelding downloaden mislukt: ${imgRes.status}`, ocr: null })
     }
     const imgBuffer = await imgRes.arrayBuffer()
-    const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+    // Strip parameters (bijv. "; charset=utf-8") — OpenAI accepteert alleen clean MIME type
+    const rawType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+    const contentType = rawType.split(';')[0]!.trim()
+    const mimeType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(contentType)
+      ? contentType
+      : 'image/jpeg'
     const base64 = Buffer.from(imgBuffer).toString('base64')
-    const dataUrl = `data:${contentType};base64,${base64}`
+    const dataUrl = `data:${mimeType};base64,${base64}`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
