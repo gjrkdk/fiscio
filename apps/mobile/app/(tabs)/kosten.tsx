@@ -79,6 +79,20 @@ export default function KostenScreen() {
   }
 
   async function kiesFoto(bron: 'camera' | 'gallery') {
+    if (bron === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync()
+      if (status !== 'granted') {
+        Alert.alert('Geen toegang', 'Geef Fiscio toegang tot de camera via je telefooninstellingen.')
+        return
+      }
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== 'granted') {
+        Alert.alert('Geen toegang', 'Geef Fiscio toegang tot je fotobibliotheek via je telefooninstellingen.')
+        return
+      }
+    }
+
     const result = bron === 'camera'
       ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 })
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 })

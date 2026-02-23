@@ -17,6 +17,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Fiscio gebruikt je locatie om ritafstanden nauwkeurig bij te houden.',
       NSLocationAlwaysAndWhenInUseUsageDescription:
         'Fiscio gebruikt je locatie op de achtergrond om ritten automatisch te registreren.',
+      NSCameraUsageDescription:
+        'Fiscio gebruikt de camera om bonnetjes te scannen.',
+      NSPhotoLibraryUsageDescription:
+        'Fiscio gebruikt je fotobibliotheek om bonnetjes toe te voegen.',
       UIBackgroundModes: ['location', 'fetch'],
     },
   },
@@ -29,10 +33,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'ACCESS_BACKGROUND_LOCATION',
       'FOREGROUND_SERVICE',
       'FOREGROUND_SERVICE_LOCATION',
+      'CAMERA',
+      'READ_MEDIA_IMAGES',
     ],
   },
   plugins: [
     'expo-router',
+    [
+      'expo-image-picker',
+      {
+        cameraPermission: 'Fiscio gebruikt de camera om bonnetjes te scannen.',
+        microphonePermission: false,
+        photosPermission: 'Fiscio gebruikt je fotobibliotheek om bonnetjes toe te voegen.',
+      },
+    ],
     [
       'expo-location',
       {
