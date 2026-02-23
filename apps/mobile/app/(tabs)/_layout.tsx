@@ -10,22 +10,10 @@ export default function TabsLayout() {
         headerTintColor: '#111827',
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Dashboard' }}
-      />
-      <Tabs.Screen
-        name="ritten"
-        options={{ title: 'Ritten' }}
-      />
-      <Tabs.Screen
-        name="kosten"
-        options={{ title: 'Kosten' }}
-      />
-      <Tabs.Screen
-        name="facturen"
-        options={{ title: 'Facturen' }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
+      <Tabs.Screen name="ritten" options={{ title: 'Ritten' }} />
+      <Tabs.Screen name="kosten" options={{ title: 'Kosten' }} />
+      <Tabs.Screen name="facturen" options={{ title: 'Facturen' }} />
     </Tabs>
   )
 }
