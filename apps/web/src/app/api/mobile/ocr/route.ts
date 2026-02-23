@@ -7,9 +7,9 @@ export async function POST(req: NextRequest) {
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
   if (!token) return NextResponse.json({ error: 'Geen token', ocr: null }, { status: 401 })
 
-  // Haal het opslagpad op uit de request body
+  // Haal het opslagpad + optionele base64 op uit de request body
   const body = await req.json().catch(() => ({}))
-  const { pad } = body
+  const { pad, base64, mimeType } = body
   if (!pad) return NextResponse.json({ error: 'Geen pad', ocr: null }, { status: 400 })
 
   // Verifieer token via Supabase
@@ -47,20 +47,27 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Afbeelding downloaden en naar base64 omzetten (signed URL is niet bereikbaar voor OpenAI)
-    const imgRes = await fetch(signedData.signedUrl)
-    if (!imgRes.ok) {
-      return NextResponse.json({ error: `Afbeelding downloaden mislukt: ${imgRes.status}`, ocr: null })
+    let dataUrl: string
+
+    if (base64 && typeof base64 === 'string' && base64.length > 0) {
+      // Base64 direct meegestuurd vanuit mobile — meest betrouwbaar
+      const safeMime = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)
+        ? mimeType
+        : 'image/jpeg'
+      dataUrl = `data:${safeMime};base64,${base64}`
+    } else {
+      // Fallback: download via signed URL
+      const imgRes = await fetch(signedData.signedUrl)
+      if (!imgRes.ok) {
+        return NextResponse.json({ error: `Afbeelding downloaden mislukt: ${imgRes.status}`, ocr: null })
+      }
+      const imgBuffer = await imgRes.arrayBuffer()
+      const rawType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+      const contentType = rawType.split(';')[0]!.trim()
+      const safeMime = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(contentType)
+        ? contentType : 'image/jpeg'
+      dataUrl = `data:${safeMime};base64,${Buffer.from(imgBuffer).toString('base64')}`
     }
-    const imgBuffer = await imgRes.arrayBuffer()
-    // Strip parameters (bijv. "; charset=utf-8") — OpenAI accepteert alleen clean MIME type
-    const rawType = imgRes.headers.get('content-type') ?? 'image/jpeg'
-    const contentType = rawType.split(';')[0]!.trim()
-    const mimeType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(contentType)
-      ? contentType
-      : 'image/jpeg'
-    const base64 = Buffer.from(imgBuffer).toString('base64')
-    const dataUrl = `data:${mimeType};base64,${base64}`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
