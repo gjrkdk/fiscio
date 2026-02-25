@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { invoices, receipts, trips, users } from '@fiscio/db'
 import { eq, and, gte, desc } from 'drizzle-orm'
 import { metAILog } from '@/lib/aiLogger'
+import { berekenTips } from '@/lib/belastingtips'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type ChatMessage = { role: 'user' | 'assistant'; content: string }
@@ -23,18 +24,32 @@ const PERSOONLIJK_KEYWORDS = [
   'mijn ', 'ik ', 'ik heb', 'ik verdien', 'ik betaal', 'ik moet',
   'hoeveel moet ik', 'hoeveel kan ik', 'mijn factuur', 'mijn ritten',
   'mijn bonnet', 'apart zetten', 'reserveren', 'sparen',
+  'minder belasting', 'besparen', 'optimaliseren', 'aftrekken',
+  'kom ik in aanmerking', 'wat kan ik', 'wat moet ik',
+  'ben ik', 'heb ik', 'voor mij', 'mijn situatie',
+]
+
+// Pure wetgevingsvragen zonder persoonlijk component
+const PUUR_WETGEVING_KEYWORDS = [
+  'wat is het tarief', 'wat is de grens', 'wanneer moet',
+  'wat verandert', 'nieuw beleid', 'prinsjesdag', 'belastingplan',
+  'hoe werkt de', 'wat is de kia', 'wat is de kor',
+  'wat is het urencriterium', 'uitleg ', 'definitie',
 ]
 
 function detecteerEngine(vraag: string): Engine {
   const lower = vraag.toLowerCase()
-  const isPersoonlijk = PERSOONLIJK_KEYWORDS.some(k => lower.includes(k))
-  const isWetgeving  = PERPLEXITY_KEYWORDS.some(k => lower.includes(k))
+  const isPersoonlijk  = PERSOONLIJK_KEYWORDS.some(k => lower.includes(k))
+  const isPuurWetgeving = PUUR_WETGEVING_KEYWORDS.some(k => lower.includes(k))
+  const isWetgeving    = PERPLEXITY_KEYWORDS.some(k => lower.includes(k))
 
-  // Persoonlijke vragen altijd met OpenAI (heeft context van gebruiker)
+  // Persoonlijk → altijd OpenAI (heeft context van gebruiker)
   if (isPersoonlijk) return 'openai'
-  // Wetgeving/actueel zonder persoonlijk → Perplexity
-  if (isWetgeving) return 'perplexity'
-  // Default: OpenAI (heeft gebruikerscontext)
+  // Pure wetgevingsvraag met actueel element → Perplexity
+  if (isPuurWetgeving && isWetgeving) return 'perplexity'
+  // Actuele wetgeving zonder persoonlijk → Perplexity
+  if (isWetgeving && !isPersoonlijk) return 'perplexity'
+  // Default: OpenAI met gebruikerscontext (persoonlijk advies)
   return 'openai'
 }
 
@@ -78,8 +93,16 @@ async function getUserContext(userId: string): Promise<string> {
 
   const gebruiker = gebruikerData[0]
   const winst = Math.max(0, omzet - kosten)
-  const jaarruimte = Math.max(0, Math.round((winst - 13646) * 0.30))
   const kmVergoeding = Math.round(kmZakelijk * 0.23)
+  const urenGeregistreerd = gebruiker?.urenHuidigJaar ?? 0
+
+  // Draai de tips-engine voor concrete kansen
+  const investeerdbedrag = bonData
+    .filter(b => ['kantoor', 'software'].includes(b.category ?? ''))
+    .reduce((s, b) => s + parseFloat(b.amount ?? '0'), 0)
+
+  const tips = berekenTips({ omzetJaar: omzet, kostenJaar: kosten, investeerdbedragJaar: investeerdbedrag, urenGeregistreerd })
+  const actieveleTips = tips.tips.filter(t => t.status === 'kans' || t.status === 'aandacht')
 
   return `
 ## Fiscio gebruikersdata (${nu.getFullYear()}, t/m vandaag)
@@ -101,25 +124,41 @@ ${Object.entries(kostenPerCat).map(([k, v]) => `- ${k}: €${Math.round(v).toLoc
 ### Belastingpositie (schatting)
 - Zelfstandigenaftrek (mits ≥1.225 uur): €3.750
 - MKB-winstvrijstelling (12,7%): €${Math.round(winst * 0.127).toLocaleString('nl-NL')}
-- Lijfrente jaarruimte: €${jaarruimte.toLocaleString('nl-NL')}
+- Lijfrente jaarruimte: €${tips.tips.find(t => t.id === 'lijfrente')?.impact ? `€${(tips.tips.find(t => t.id === 'lijfrente')!.impact!).toLocaleString('nl-NL')} besparing mogelijk` : 'Niet van toepassing'}
 - KOR van toepassing: ${omzet < 20000 ? 'Mogelijk (omzet onder €20K)' : 'Nee (omzet boven €20K)'}
+- Uren geregistreerd: ${urenGeregistreerd} / 1.225 uur
+
+### Concrete belastingkansen (uit Fiscio tips-engine)
+${actieveleTips.length > 0
+  ? actieveleTips.map(t =>
+    `- **${t.titel}**: ${t.uitleg.slice(0, 120)}... → Potentiële besparing: ${t.impact ? `€${t.impact.toLocaleString('nl-NL')}` : 'onbekend'}`
+  ).join('\n')
+  : '- Geen directe kansen gevonden op basis van huidige data'}
+
+### Totaal potentiële besparing
+- €${tips.totaalPotentieel.toLocaleString('nl-NL')} (op basis van gedetecteerde kansen)
 `.trim()
 }
 
 // ─── OpenAI aanroep (persoonlijk advies) ─────────────────────────────────
 async function* streamOpenAI(messages: ChatMessage[], context: string, apiKey: string) {
-  const systeemPrompt = `Je bent een slimme, directe Nederlandse belastingadviseur voor ZZP'ers. Je naam is Fiscio AI.
+  const systeemPrompt = `Je bent Fiscio AI — een scherpe, persoonlijke belastingadviseur voor ZZP'ers.
+Je hebt toegang tot de volledige financiële data van de gebruiker (zie hieronder).
 
-Je geeft concrete, persoonlijke adviezen op basis van de financiële data van de gebruiker.
-Je benoemt grijze gebieden eerlijk met een risico-inschatting (laag/middel/hoog).
-Je bent geen corporate robot — je bent de slimme vriend die toevallig belastingexpert is.
+KERNREGEL: Gebruik ALTIJD de echte cijfers uit de gebruikersdata in je antwoord.
+Nooit generieke adviezen geven als je specifieke data hebt. Geen "afhankelijk van je situatie" — je KENT de situatie.
 
-Regels:
-- Antwoord altijd in het Nederlands
-- Gebruik altijd echte bedragen uit de gebruikersdata als die relevant zijn
-- Bij bedragen: altijd €-teken en Nederlandse notatie (punt als scheidingsteken)
-- Voeg altijd een korte disclaimer toe als je over grijze gebieden praat
-- Maximaal 300 woorden tenzij de vraag complexer is
+Aanpak bij elke vraag:
+1. Kijk naar de concrete cijfers van de gebruiker
+2. Identificeer de grootste kansen/risico's op basis van die cijfers
+3. Geef een concreet, gepersonaliseerd antwoord met echte bedragen
+4. Benoem grijze gebieden met risico-label: [risico: laag/middel/hoog]
+5. Sluit af met de 1-2 meest impactvolle acties
+
+Toon: direct, eerlijk, geen corporate taal. De slimme vriend die toevallig belastingexpert is.
+Taal: altijd Nederlands.
+Lengte: beknopt maar compleet. Gebruik opsommingen voor meerdere punten.
+Disclaimer: alleen toevoegen bij grijze gebieden, niet standaard onderaan elk antwoord.
 
 ${context}`
 
