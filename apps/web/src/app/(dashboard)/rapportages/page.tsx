@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { invoices, receipts, trips } from '@fiscio/db'
 import { eq, and, gte, lt } from 'drizzle-orm'
 import { Grafieken } from './Grafieken'
+import { ExportKnoppen } from './ExportKnoppen'
 
 const MAANDEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 const KWARTALEN = ['Q1 (jan–mrt)', 'Q2 (apr–jun)', 'Q3 (jul–sep)', 'Q4 (okt–dec)']
@@ -156,6 +157,9 @@ export default async function RapportagesPage({
           </p>
         </div>
       )}
+
+      {/* Export */}
+      <ExportKnoppen jaar={jaar} />
 
       {/* Grafieken (client component) */}
       <Grafieken
