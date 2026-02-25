@@ -197,29 +197,77 @@ ${context}`
   }
 }
 
-// ─── Perplexity aanroep (actuele wetgeving) ──────────────────────────────
-async function* streamPerplexity(messages: ChatMessage[], apiKey: string) {
+// ─── Perplexity: haal wetgevingsinfo op (niet-streaming, bufferen) ────────
+async function haalPerplexityInfo(messages: ChatMessage[], apiKey: string): Promise<{ tekst: string; bronnen: string[] }> {
   const systeemPrompt = `Je bent een Nederlandse belastingexpert gespecialiseerd in ZZP-belastingrecht.
 Je geeft actuele, correcte informatie over Nederlandse belastingregels voor freelancers/ZZP'ers.
-Antwoord altijd in het Nederlands. Wees concreet met bedragen en percentages.
-Vermeld altijd het jaar waarop de informatie van toepassing is.
-Voeg een korte disclaimer toe dat de gebruiker een belastingadviseur kan raadplegen voor persoonlijk advies.`
+Antwoord in het Nederlands. Wees concreet met bedragen en percentages.
+Vermeld altijd het jaar. Houd het beknopt: max 200 woorden.`
 
   const res = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: 'sonar-pro',
-      stream: true,
-      max_tokens: 800,
-      messages: [
-        { role: 'system', content: systeemPrompt },
-        ...messages,
-      ],
+      stream: false,
+      max_tokens: 600,
+      messages: [{ role: 'system', content: systeemPrompt }, ...messages],
     }),
   })
 
   if (!res.ok) throw new Error(`Perplexity fout: ${res.status}`)
+  const json = await res.json()
+  const tekst = json.choices?.[0]?.message?.content ?? ''
+  const bronnen: string[] = (json.citations ?? []).slice(0, 3)
+  return { tekst, bronnen }
+}
+
+// ─── Perplexity + GPT-4o impact: gecombineerde streaming ─────────────────
+async function* streamPerplexityMetImpact(
+  messages: ChatMessage[],
+  context: string,
+  perplexityKey: string,
+  openaiKey: string
+) {
+  // Fase 1: Perplexity wetgevingsinfo ophalen
+  const { tekst: wetInfo, bronnen } = await haalPerplexityInfo(messages, perplexityKey)
+
+  // Stream de Perplexity info
+  yield '**📋 Actuele wetgeving:**\n\n'
+  yield wetInfo
+  if (bronnen.length > 0) {
+    yield `\n\n**Bronnen:** ${bronnen.map((b, i) => `[${i + 1}](${b})`).join(' · ')}`
+  }
+
+  // Scheiding
+  yield '\n\n---\n\n**💡 Impact voor jou:**\n\n'
+
+  // Fase 2: GPT-4o personaliseert op basis van wetinfo + gebruikersdata
+  const impactPrompt = `De gebruiker vroeg: "${messages[messages.length - 1]?.content}"
+
+Hier is de actuele wetgevingsinformatie (van Perplexity):
+${wetInfo}
+
+Analyseer nu specifiek de impact op de situatie van deze gebruiker op basis van hun financiële data.
+Wees concreet: noem echte bedragen, percentages en wat het betekent voor hun specifieke omzet/winst/kosten.
+Geef 2-3 concrete, geprioriteerde acties.
+Geen algemene uitleg herhalen — alleen de persoonlijke impact en wat ze nu moeten doen.`
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      stream: true,
+      max_tokens: 500,
+      messages: [
+        { role: 'system', content: `Je bent Fiscio AI — een persoonlijke belastingadviseur voor ZZP'ers.\nGebruik ALTIJD de echte cijfers uit de data hieronder.\n\n${context}` },
+        { role: 'user', content: impactPrompt },
+      ],
+    }),
+  })
+
+  if (!res.ok) throw new Error(`OpenAI impact fout: ${res.status}`)
   const reader = res.body!.getReader()
   const decoder = new TextDecoder()
 
@@ -235,11 +283,6 @@ Voeg een korte disclaimer toe dat de gebruiker een belastingadviseur kan raadple
         const json = JSON.parse(data)
         const token = json.choices?.[0]?.delta?.content
         if (token) yield token
-        // Perplexity: bronnen zitten in citations
-        const citations = json.citations
-        if (citations?.length) {
-          yield `\n\n**Bronnen:** ${(citations as string[]).slice(0, 3).map((c: string, i: number) => `[${i + 1}](${c})`).join(' · ')}`
-        }
       } catch { /* skip */ }
     }
   }
@@ -278,12 +321,13 @@ export async function POST(req: NextRequest) {
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ engine })}\n\n`))
 
       try {
+        const context = await getUserContext(user.id)
         const generator = engine === 'perplexity' && perplexityKey
-          ? streamPerplexity(messages, perplexityKey)
-          : streamOpenAI(messages, await getUserContext(user.id), openaiKey)
+          ? streamPerplexityMetImpact(messages, context, perplexityKey, openaiKey)
+          : streamOpenAI(messages, context, openaiKey)
 
         await metAILog(
-          { userId: user.id, provider: engine === 'perplexity' ? 'openai' : 'openai', callType: 'chat', dataCategories: ['chat_vraag'], anonymized: true },
+          { userId: user.id, provider: 'openai', callType: 'chat', dataCategories: ['chat_vraag'], anonymized: true },
           async () => {
             for await (const token of generator) {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`))
