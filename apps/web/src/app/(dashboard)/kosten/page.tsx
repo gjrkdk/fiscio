@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { BonToevoegenModal } from './BonToevoegenModal'
 import { BonVerwijderenKnop } from './BonVerwijderenKnop'
+import { StatCard } from '@/components/ui'
 
 const CATEGORIE_LABELS: Record<string, string> = {
   kantoor: 'Kantoor',
@@ -56,16 +57,9 @@ export default async function KostenPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Totaal excl. BTW', value: euro(totaalExcl.toString()) },
-          { label: 'Totaal BTW', value: euro(totaalBtw.toString()) },
-          { label: 'Totaal incl. BTW', value: euro(totaalIncl.toString()), highlight: true },
-        ].map(({ label, value, highlight }) => (
-          <div key={label} className={`rounded-xl border p-4 ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-gray-900'}`}>{value}</p>
-          </div>
-        ))}
+        <StatCard label="Totaal excl. BTW" waarde={euro(totaalExcl.toString())} icon="🧾" kleur="orange" />
+        <StatCard label="Voorbelasting BTW" waarde={euro(totaalBtw.toString())} icon="↩️" kleur="purple" />
+        <StatCard label="Totaal incl. BTW" waarde={euro(totaalIncl.toString())} icon="💳" kleur="blue" />
       </div>
 
       {/* Tabel */}

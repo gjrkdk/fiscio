@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { RitToevoegenForm } from '@/components/ritten/RitToevoegenForm'
 import { RitVerwijderenButton } from '@/components/ritten/RitVerwijderenButton'
 import { RitClassificatieBadge, RitOverrideKnoppen, ClassificeerAllesKnop } from './RitClassificatie'
+import { StatCard } from '@/components/ui'
 
 function formatDatum(date: Date) {
   return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
@@ -45,24 +46,9 @@ export default async function RittenPage() {
 
       {/* Statistieken */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-xl border border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">Totaal km (jaar)</p>
-          <p className="text-xl font-bold text-gray-900">
-            {totaalKm.toLocaleString('nl-NL', { maximumFractionDigits: 0 })} km
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">Zakelijke km</p>
-          <p className="text-xl font-bold text-gray-900">
-            {zakelijkeKm.toLocaleString('nl-NL', { maximumFractionDigits: 0 })} km
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">Vergoeding (€0,23/km)</p>
-          <p className="text-xl font-bold text-green-700">
-            € {vergoeding.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
+        <StatCard label="Totaal km (jaar)" waarde={`${totaalKm.toLocaleString('nl-NL', { maximumFractionDigits: 0 })} km`} icon="📍" kleur="purple" />
+        <StatCard label="Zakelijke km" waarde={`${zakelijkeKm.toLocaleString('nl-NL', { maximumFractionDigits: 0 })} km`} icon="🏢" kleur="blue" />
+        <StatCard label="Km-vergoeding" waarde={`€ ${vergoeding.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="€0,23 per km" icon="💰" kleur="green" />
       </div>
 
       {/* Tabel */}

@@ -1,8 +1,18 @@
 import Link from 'next/link'
 import { register } from '../login/actions'
 
-type Props = {
-  searchParams: Promise<{ error?: string; success?: string }>
+type Props = { searchParams: Promise<{ error?: string; success?: string }> }
+
+const inputStyle = {
+  width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem',
+  border: '1.5px solid oklch(0.88 0.01 255)', borderRadius: '0.625rem',
+  outline: 'none', background: 'white', color: 'oklch(0.13 0.02 255)',
+  boxSizing: 'border-box' as const,
+}
+
+const labelStyle = {
+  display: 'block', fontSize: '0.825rem', fontWeight: 600,
+  color: 'oklch(0.30 0.02 255)', marginBottom: '0.4rem',
 }
 
 export default async function RegisterPage({ searchParams }: Props) {
@@ -10,15 +20,15 @@ export default async function RegisterPage({ searchParams }: Props) {
 
   if (success === 'check_email') {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="text-4xl mb-4">📧</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Check je e-mail</h2>
-          <p className="text-gray-500 text-sm">
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'oklch(0.99 0.003 255)', padding: '2rem' }}>
+        <div style={{ maxWidth: 420, textAlign: 'center', background: 'white', borderRadius: '1.25rem', padding: '3rem 2.5rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 4px 24px oklch(0 0 0 / 0.06)' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>📧</div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', marginBottom: '0.75rem' }}>Check je e-mail</h2>
+          <p style={{ color: 'oklch(0.50 0.015 255)', fontSize: '0.9rem', lineHeight: 1.7 }}>
             We hebben een bevestigingslink gestuurd. Klik op de link om je account te activeren.
           </p>
-          <Link href="/login" className="mt-6 inline-block text-sm text-blue-600 hover:underline">
-            Terug naar inloggen
+          <Link href="/login" style={{ display: 'inline-block', marginTop: '1.5rem', fontSize: '0.875rem', color: 'oklch(0.52 0.21 255)', fontWeight: 600, textDecoration: 'none' }}>
+            ← Terug naar inloggen
           </Link>
         </div>
       </main>
@@ -26,66 +36,77 @@ export default async function RegisterPage({ searchParams }: Props) {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-blue-600">Fiscio</h1>
-          <p className="text-gray-500 mt-1 text-sm">Account aanmaken</p>
+    <main style={{ minHeight: '100vh', display: 'flex' }}>
+      {/* Brand panel */}
+      <div style={{
+        flex: '0 0 42%', display: 'none',
+        background: 'linear-gradient(160deg, oklch(0.40 0.22 255) 0%, oklch(0.55 0.20 220) 100%)',
+        padding: '3rem', flexDirection: 'column', justifyContent: 'space-between',
+      }} className="brand-panel">
+        <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'white', letterSpacing: '-0.03em' }}>Fiscio</span>
+        <div>
+          <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+            Start gratis.<br />Stop met papiertjes.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {['✓ Geen creditcard nodig', '✓ AVG-compliant', '✓ Servers in Nederland (EU)', '✓ Annuleer wanneer je wil'].map(f => (
+              <p key={f} style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', margin: 0 }}>{f}</p>
+            ))}
+          </div>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <form action={register} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              E-mailadres
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="jij@voorbeeld.nl"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Wachtwoord
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Minimaal 8 tekens"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm"
-          >
-            Account aanmaken
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Al een account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
-            Inloggen
-          </Link>
-        </p>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>© {new Date().getFullYear()} Fiscio</p>
       </div>
+
+      {/* Form panel */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: 'oklch(0.99 0.003 255)' }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <div style={{ marginBottom: '2.5rem' }}>
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.52 0.21 255)', letterSpacing: '-0.02em' }}>Fiscio</span>
+            </Link>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'oklch(0.13 0.02 255)', marginTop: '1.5rem', marginBottom: '0.25rem' }}>
+              Account aanmaken
+            </h1>
+            <p style={{ color: 'oklch(0.50 0.015 255)', fontSize: '0.9rem' }}>Gratis starten — geen creditcard nodig</p>
+          </div>
+
+          {error && (
+            <div style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: 'oklch(0.97 0.03 25)', border: '1px solid oklch(0.88 0.06 25)', borderRadius: '0.625rem', fontSize: '0.875rem', color: 'oklch(0.45 0.18 25)' }}>
+              {error}
+            </div>
+          )}
+
+          <form action={register}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={labelStyle}>E-mailadres</label>
+              <input name="email" type="email" autoComplete="email" required placeholder="jij@voorbeeld.nl" style={inputStyle} />
+            </div>
+
+            <div style={{ marginBottom: '1.75rem' }}>
+              <label style={labelStyle}>Wachtwoord</label>
+              <input name="password" type="password" autoComplete="new-password" required placeholder="Minimaal 8 tekens" style={inputStyle} />
+            </div>
+
+            <button type="submit" style={{
+              width: '100%', padding: '0.875rem', fontSize: '0.95rem', fontWeight: 700,
+              color: 'white', background: 'oklch(0.52 0.21 255)',
+              border: 'none', borderRadius: '0.75rem', cursor: 'pointer',
+              boxShadow: '0 4px 16px oklch(0.52 0.21 255 / 0.30)',
+            }}>
+              Maak gratis account →
+            </button>
+          </form>
+
+          <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'oklch(0.50 0.015 255)' }}>
+            Al een account?{' '}
+            <Link href="/login" style={{ color: 'oklch(0.52 0.21 255)', fontWeight: 600, textDecoration: 'none' }}>
+              Inloggen
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <style>{`@media (min-width: 768px) { .brand-panel { display: flex !important; } }`}</style>
     </main>
   )
 }
