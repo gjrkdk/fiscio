@@ -1,23 +1,10 @@
 import Link from 'next/link'
-import { AIWidget } from '@/components/AIWidget'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
 import { logout } from '@/app/(auth)/login/actions'
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/ritten', label: 'Ritten' },
-  { href: '/kosten', label: 'Kosten' },
-  { href: '/facturen', label: 'Facturen' },
-  { href: '/klanten', label: 'Klanten' },
-  { href: '/btw', label: 'BTW-aangifte' },
-  { href: '/belastingtips', label: '💡 Belastingtips' },
-  { href: '/ai-chat', label: '🤖 AI-adviseur' },
-  { href: '/rapportages', label: '📊 Rapportages' },
-  { href: '/instellingen', label: 'Instellingen' },
-  { href: '/instellingen/verwerkingen', label: '🔒 Gegevensverwerking' },
-]
+import { AIWidget } from '@/components/AIWidget'
+import { SidebarNav } from '@/components/SidebarNav'
 
 async function getUser() {
   const cookieStore = await cookies()
@@ -39,55 +26,58 @@ async function getUser() {
   return user
 }
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div style={{ display: 'flex', height: '100vh', background: 'oklch(0.97 0.007 255)' }}>
       {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-blue-600">Fiscio</h1>
+      <aside style={{
+        width: 224, background: 'white', borderRight: '1px solid oklch(0.91 0.01 255)',
+        display: 'flex', flexDirection: 'column', flexShrink: 0,
+      }}>
+        {/* Logo */}
+        <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid oklch(0.95 0.005 255)' }}>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'oklch(0.52 0.21 255)', letterSpacing: '-0.02em' }}>
+              Fiscio
+            </span>
+          </Link>
+          <p style={{ fontSize: '0.7rem', color: 'oklch(0.68 0.01 255)', marginTop: '0.1rem' }}>
+            AI-native administratie
+          </p>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Nav (client component voor active state) */}
+        <SidebarNav />
 
-        {/* Gebruiker + uitloggen */}
-        <div className="p-3 border-t border-gray-200">
-          <p className="text-xs text-gray-400 truncate px-3 mb-1">
+        {/* Gebruiker */}
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid oklch(0.95 0.005 255)' }}>
+          <p style={{ fontSize: '0.7rem', color: 'oklch(0.68 0.01 255)', marginBottom: '0.5rem', paddingLeft: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user?.email}
           </p>
           <form action={logout}>
-            <button
-              type="submit"
-              className="w-full text-left px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            <button type="submit" style={{
+              width: '100%', textAlign: 'left', padding: '0.5rem 0.75rem',
+              fontSize: '0.8rem', color: 'oklch(0.50 0.015 255)',
+              borderRadius: '0.5rem', border: 'none', background: 'none',
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.97 0.007 255)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
             >
-              Uitloggen
+              ↩ Uitloggen
             </button>
           </form>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto p-8">
+      {/* Main */}
+      <main style={{ flex: 1, overflow: 'auto', padding: '2rem' }}>
         {children}
       </main>
 
-      {/* AI widget — altijd zichtbaar */}
+      {/* AI widget */}
       <AIWidget />
     </div>
   )
