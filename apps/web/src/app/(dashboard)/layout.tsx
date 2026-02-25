@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
-import { AIWidget } from '@/components/AIWidget'
 import { SidebarNav } from '@/components/SidebarNav'
 import { LogoutButton } from '@/components/LogoutButton'
 
@@ -65,8 +64,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {children}
       </main>
 
-      {/* AI widget */}
-      <AIWidget />
     </div>
   )
 }
