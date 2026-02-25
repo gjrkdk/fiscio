@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AIWidget } from '@/components/AIWidget'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
@@ -85,6 +86,9 @@ export default async function DashboardLayout({
       <main className="flex-1 overflow-auto p-8">
         {children}
       </main>
+
+      {/* AI widget — altijd zichtbaar */}
+      <AIWidget />
     </div>
   )
 }

@@ -315,7 +315,7 @@ export async function POST(req: NextRequest) {
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
   if (!token) return NextResponse.json({ error: 'Geen token' }, { status: 401 })
 
-  const { message, history = [] }: { message: string; history: ChatMessage[] } = await req.json()
+  const { message, history = [], pageContext }: { message: string; history: ChatMessage[]; pageContext?: string } = await req.json()
   if (!message?.trim()) return NextResponse.json({ error: 'Geen bericht' }, { status: 400 })
 
   // Auth
@@ -348,9 +348,11 @@ export async function POST(req: NextRequest) {
         ])
 
         // Voeg semantisch gevonden data toe aan context
+        const paginaCtx = pageContext ? `\n\n### Huidige pagina van de gebruiker\nDe gebruiker bevindt zich op: **${pageContext}**. Houd dit in gedachten bij je antwoord.` : ''
+
         const contextMetZoekresultaten = relevanteData.length > 0
-          ? `${context}\n\n### Meest relevante data bij deze vraag (semantisch gezocht)\n${relevanteData.map(r => `- [${r.type}] ${r.tekst}${r.datum ? ` (${r.datum.slice(0, 10)})` : ''}`).join('\n')}`
-          : context
+          ? `${context}${paginaCtx}\n\n### Meest relevante data bij deze vraag (semantisch gezocht)\n${relevanteData.map(r => `- [${r.type}] ${r.tekst}${r.datum ? ` (${r.datum.slice(0, 10)})` : ''}`).join('\n')}`
+          : `${context}${paginaCtx}`
 
         const generator = engine === 'perplexity' && perplexityKey
           ? streamPerplexityMetImpact(messages, contextMetZoekresultaten, perplexityKey, openaiKey)
