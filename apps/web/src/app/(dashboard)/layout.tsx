@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
-import { logout } from '@/app/(auth)/login/actions'
 import { AIWidget } from '@/components/AIWidget'
 import { SidebarNav } from '@/components/SidebarNav'
+import { LogoutButton } from '@/components/LogoutButton'
 
 async function getUser() {
   const cookieStore = await cookies()
@@ -56,19 +56,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <p style={{ fontSize: '0.7rem', color: 'oklch(0.68 0.01 255)', marginBottom: '0.5rem', paddingLeft: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user?.email}
           </p>
-          <form action={logout}>
-            <button type="submit" style={{
-              width: '100%', textAlign: 'left', padding: '0.5rem 0.75rem',
-              fontSize: '0.8rem', color: 'oklch(0.50 0.015 255)',
-              borderRadius: '0.5rem', border: 'none', background: 'none',
-              cursor: 'pointer', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.97 0.007 255)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              ↩ Uitloggen
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </aside>
 
