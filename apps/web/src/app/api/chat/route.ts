@@ -202,34 +202,6 @@ ${context}`
   }
 }
 
-// ─── Perplexity: messages moeten strict user/assistant alterneren ─────────
-function saniteerVoorPerplexity(messages: ChatMessage[]): ChatMessage[] {
-  // Verwijder leading assistant messages (Perplexity wil starten met user)
-  const gefilterd = [...messages].filter((_, i, arr) => {
-    // Gooi assistant berichten weg totdat we een user bericht tegenkomen
-    const eersteUser = arr.findIndex(m => m.role === 'user')
-    return i >= eersteUser
-  })
-
-  // Zorg voor strict alternatie: als twee opeenvolgende berichten dezelfde rol hebben, samenvoegen
-  const gesaneerd: ChatMessage[] = []
-  for (const msg of gefilterd) {
-    const vorige = gesaneerd[gesaneerd.length - 1]
-    if (vorige && vorige.role === msg.role) {
-      vorige.content += '\n' + msg.content
-    } else {
-      gesaneerd.push({ ...msg })
-    }
-  }
-
-  // Moet eindigen op user
-  if (gesaneerd[gesaneerd.length - 1]?.role !== 'user') {
-    gesaneerd.pop()
-  }
-
-  return gesaneerd
-}
-
 // ─── Perplexity: haal wetgevingsinfo op (niet-streaming, bufferen) ────────
 async function haalPerplexityInfo(messages: ChatMessage[], apiKey: string): Promise<{ tekst: string; bronnen: string[] }> {
   const systeemPrompt = `Je bent een Nederlandse belastingexpert gespecialiseerd in ZZP-belastingrecht.
@@ -244,7 +216,7 @@ Vermeld altijd het jaar. Houd het beknopt: max 200 woorden.`
       model: 'sonar-pro',
       stream: false,
       max_tokens: 600,
-      messages: [{ role: 'system', content: systeemPrompt }, ...saniteerVoorPerplexity(messages)],
+      messages: [{ role: 'system', content: systeemPrompt }, { role: 'user', content: messages[messages.length - 1]!.content }],
     }),
   })
 
