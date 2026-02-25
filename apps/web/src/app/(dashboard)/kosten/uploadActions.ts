@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { metAILog } from '@/lib/aiLogger'
 
 export type OcrResultaat = {
   vendor?: string
@@ -64,18 +65,21 @@ export async function bonFotoVerwerken(formData: FormData): Promise<FotoVerwerkR
     const base64 = Buffer.from(imgBuffer).toString('base64')
     const dataUrl = `data:${mimeType};base64,${base64}`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Je bent een expert in het lezen van Nederlandse kassabonnen en facturen.
+    const { ocr, ocrRaw } = await metAILog(
+      { userId: user.id, provider: 'openai', callType: 'ocr', dataCategories: ['bonnetje_afbeelding'], anonymized: false },
+      async () => {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            max_tokens: 400,
+            messages: [{
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Je bent een expert in het lezen van Nederlandse kassabonnen en facturen.
 Analyseer de afbeelding zorgvuldig en geef ALLEEN een geldig JSON-object terug, zonder uitleg of markdown.
 
 Regels:
@@ -88,23 +92,21 @@ Regels:
 
 Laat een veld weg als het niet leesbaar of niet aanwezig is.
 Geef ALLEEN het JSON-object terug, niets anders.`,
-            },
-            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-          ],
-        }],
-      }),
-    })
+                },
+                { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+              ],
+            }],
+          }),
+        })
+        if (!response.ok) throw new Error(`OpenAI ${response.status}`)
+        const json = await response.json()
+        const raw = json.choices?.[0]?.message?.content ?? ''
+        const match = raw.match(/\{[\s\S]*\}/)
+        return { ocr: (match ? JSON.parse(match[0]) : {}) as OcrResultaat, ocrRaw: raw }
+      }
+    ).catch(() => ({ ocr: null, ocrRaw: null }))
 
-    if (!response.ok) return { imageUrl, ocr: null, ocrRaw: null }
-
-    const json = await response.json()
-    const raw = json.choices?.[0]?.message?.content ?? ''
-
-    // JSON parsen
-    const match = raw.match(/\{[\s\S]*\}/)
-    const ocr: OcrResultaat = match ? JSON.parse(match[0]) : {}
-
-    return { imageUrl, ocr, ocrRaw: raw }
+    return { imageUrl, ocr, ocrRaw }
   } catch {
     return { imageUrl, ocr: null, ocrRaw: null }
   }

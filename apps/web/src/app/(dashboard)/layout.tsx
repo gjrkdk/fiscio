@@ -12,6 +12,7 @@ const navItems = [
   { href: '/klanten', label: 'Klanten' },
   { href: '/btw', label: 'BTW-aangifte' },
   { href: '/instellingen', label: 'Instellingen' },
+  { href: '/instellingen/verwerkingen', label: '🔒 Gegevensverwerking' },
 ]
 
 async function getUser() {
