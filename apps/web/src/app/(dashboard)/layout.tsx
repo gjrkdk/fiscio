@@ -11,6 +11,7 @@ const navItems = [
   { href: '/facturen', label: 'Facturen' },
   { href: '/klanten', label: 'Klanten' },
   { href: '/btw', label: 'BTW-aangifte' },
+  { href: '/belastingtips', label: '💡 Belastingtips' },
   { href: '/instellingen', label: 'Instellingen' },
   { href: '/instellingen/verwerkingen', label: '🔒 Gegevensverwerking' },
 ]
