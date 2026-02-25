@@ -17,9 +17,11 @@ export default async function NieuwFactuurPage() {
     .orderBy(asc(clients.name))
 
   return (
-    <div className="max-w-3xl">
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">Nieuwe factuur</h2>
-      <p className="text-sm text-gray-500 mb-6">Vul de gegevens in en sla op als concept of verstuur direct.</p>
+    <div style={{ maxWidth: 760 }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Nieuwe factuur</h1>
+        <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>Vul de gegevens in en sla op als concept of verstuur direct.</p>
+      </div>
       <NieuwFactuurForm klanten={klantenLijst} />
     </div>
   )
