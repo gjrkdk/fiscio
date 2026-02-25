@@ -13,6 +13,7 @@ const navItems = [
   { href: '/btw', label: 'BTW-aangifte' },
   { href: '/belastingtips', label: '💡 Belastingtips' },
   { href: '/ai-chat', label: '🤖 AI-adviseur' },
+  { href: '/rapportages', label: '📊 Rapportages' },
   { href: '/instellingen', label: 'Instellingen' },
   { href: '/instellingen/verwerkingen', label: '🔒 Gegevensverwerking' },
 ]
