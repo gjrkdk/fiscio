@@ -55,6 +55,7 @@ function detecteerEngine(vraag: string): Engine {
 
 // ─── Gebruikerscontext ophalen voor OpenAI ────────────────────────────────
 async function getUserContext(userId: string): Promise<string> {
+  try {
   const nu = new Date()
   const beginJaar = new Date(nu.getFullYear(), 0, 1)
 
@@ -138,6 +139,10 @@ ${actieveleTips.length > 0
 ### Totaal potentiële besparing
 - €${tips.totaalPotentieel.toLocaleString('nl-NL')} (op basis van gedetecteerde kansen)
 `.trim()
+  } catch (e) {
+    console.error('[Chat] getUserContext fout:', e)
+    return '## Gebruikersdata tijdelijk niet beschikbaar'
+  }
 }
 
 // ─── OpenAI aanroep (persoonlijk advies) ─────────────────────────────────
@@ -215,7 +220,11 @@ Vermeld altijd het jaar. Houd het beknopt: max 200 woorden.`
     }),
   })
 
-  if (!res.ok) throw new Error(`Perplexity fout: ${res.status}`)
+  if (!res.ok) {
+    const errTekst = await res.text()
+    console.error('[Perplexity] Fout:', res.status, errTekst)
+    throw new Error(`Perplexity fout ${res.status}: ${errTekst.slice(0, 200)}`)
+  }
   const json = await res.json()
   const tekst = json.choices?.[0]?.message?.content ?? ''
   const bronnen: string[] = (json.citations ?? []).slice(0, 3)
@@ -229,8 +238,19 @@ async function* streamPerplexityMetImpact(
   perplexityKey: string,
   openaiKey: string
 ) {
-  // Fase 1: Perplexity wetgevingsinfo ophalen
-  const { tekst: wetInfo, bronnen } = await haalPerplexityInfo(messages, perplexityKey)
+  // Fase 1: Perplexity wetgevingsinfo ophalen (met fallback naar OpenAI)
+  let wetInfo: string
+  let bronnen: string[] = []
+  try {
+    const result = await haalPerplexityInfo(messages, perplexityKey)
+    wetInfo = result.tekst
+    bronnen = result.bronnen
+  } catch (e) {
+    console.error('[Chat] Perplexity fallback naar OpenAI:', e)
+    // Fallback: gebruik OpenAI met volledige context
+    yield* streamOpenAI(messages, context, openaiKey)
+    return
+  }
 
   // Stream de Perplexity info
   yield '**📋 Actuele wetgeving:**\n\n'
@@ -336,6 +356,7 @@ export async function POST(req: NextRequest) {
           }
         )
       } catch (e) {
+        console.error('[Chat] Stream fout:', e)
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: String(e) })}\n\n`))
       } finally {
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))

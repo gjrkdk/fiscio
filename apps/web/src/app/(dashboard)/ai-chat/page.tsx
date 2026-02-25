@@ -141,6 +141,14 @@ export default function AIChatPage() {
                 return nieuw
               })
             }
+            if (json.error) {
+              antwoord = `⚠️ Fout: ${json.error}`
+              setBerichten(prev => {
+                const nieuw = [...prev]
+                nieuw[nieuw.length - 1] = { role: 'assistant', content: antwoord, laden: false }
+                return nieuw
+              })
+            }
           } catch { /* skip */ }
         }
       }
