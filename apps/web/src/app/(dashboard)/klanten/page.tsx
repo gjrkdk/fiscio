@@ -18,45 +18,56 @@ export default async function KlantenPage() {
     .orderBy(asc(clients.name))
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Klanten</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Klanten</h1>
+          <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>
             {klantenLijst.length} klant{klantenLijst.length !== 1 ? 'en' : ''} opgeslagen
           </p>
         </div>
         <KlantModal />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 1px 4px oklch(0 0 0 / 0.04)', overflow: 'hidden' }}>
         {klantenLijst.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">
-            <p className="text-4xl mb-3">🏢</p>
-            <p className="font-medium text-gray-500">Nog geen klanten</p>
-            <p className="text-sm mt-1">Sla klantgegevens op voor sneller facturen maken</p>
+          <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '3rem', margin: '0 0 0.75rem' }}>🏢</p>
+            <p style={{ fontWeight: 700, color: 'oklch(0.30 0.02 255)', margin: '0 0 0.375rem' }}>Nog geen klanten</p>
+            <p style={{ fontSize: '0.875rem', color: 'oklch(0.55 0.015 255)', margin: '0 0 1.5rem' }}>Sla klantgegevens op voor sneller facturen maken</p>
+            <KlantModal />
           </div>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {klantenLijst.map(klant => (
-              <div key={klant.id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{klant.name}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    {klant.email && <p className="text-xs text-gray-400">{klant.email}</p>}
-                    {klant.kvkNumber && <p className="text-xs text-gray-400">KVK: {klant.kvkNumber}</p>}
-                    {klant.btwNumber && <p className="text-xs text-gray-400">BTW: {klant.btwNumber}</p>}
-                  </div>
-                  {klant.address && <p className="text-xs text-gray-400 mt-0.5">{klant.address}</p>}
-                </div>
-                <div className="flex items-center gap-2 ml-4 shrink-0">
-                  <KlantModal klant={klant} />
-                  <KlantVerwijderenKnop id={klant.id} />
+        ) : klantenLijst.map((klant, i) => (
+          <div key={klant.id} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '1rem 1.25rem',
+            borderBottom: i < klantenLijst.length - 1 ? '1px solid oklch(0.96 0.005 255)' : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', minWidth: 0, flex: 1 }}>
+              {/* Avatar initiaal */}
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                background: 'oklch(0.95 0.04 255)', color: 'oklch(0.40 0.22 255)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.875rem', fontWeight: 700,
+              }}>
+                {klant.name?.charAt(0).toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 600, color: 'oklch(0.20 0.02 255)', fontSize: '0.9rem' }}>{klant.name}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                  {klant.email && <span style={{ fontSize: '0.775rem', color: 'oklch(0.55 0.015 255)' }}>{klant.email}</span>}
+                  {klant.kvkNumber && <span style={{ fontSize: '0.775rem', color: 'oklch(0.60 0.01 255)' }}>KVK: {klant.kvkNumber}</span>}
+                  {klant.address && <span style={{ fontSize: '0.775rem', color: 'oklch(0.60 0.01 255)' }}>{klant.address}</span>}
                 </div>
               </div>
-            ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: '1rem' }}>
+              <KlantModal klant={klant} />
+              <KlantVerwijderenKnop id={klant.id} />
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   )

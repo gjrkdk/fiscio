@@ -114,25 +114,27 @@ export default async function RapportagesPage({
 
   const beschikbareJaren = [new Date().getFullYear(), new Date().getFullYear() - 1]
 
+  const S = {
+    card: { background: 'white', borderRadius: '1rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 1px 4px oklch(0 0 0 / 0.04)', overflow: 'hidden' as const },
+    th: { padding: '0.75rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'oklch(0.55 0.015 255)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', background: 'oklch(0.98 0.003 255)', textAlign: 'left' as const },
+    td: { padding: '0.875rem 1.25rem', fontSize: '0.875rem', color: 'oklch(0.20 0.02 255)', borderBottom: '1px solid oklch(0.96 0.005 255)' },
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header + jaar selector */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">📊 Rapportages</h1>
-          <p className="text-sm text-gray-500 mt-1">Financieel overzicht {jaar}</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Rapportages</h1>
+          <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>Financieel overzicht {jaar}</p>
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           {beschikbareJaren.map(j => (
-            <a
-              key={j}
-              href={`/rapportages?jaar=${j}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                j === jaar
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
+            <a key={j} href={`/rapportages?jaar=${j}`} style={{
+              padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none',
+              background: j === jaar ? 'oklch(0.52 0.21 255)' : 'oklch(0.95 0.005 255)',
+              color: j === jaar ? 'white' : 'oklch(0.45 0.015 255)',
+            }}>
               {j}
             </a>
           ))}
@@ -140,19 +142,19 @@ export default async function RapportagesPage({
       </div>
 
       {/* KPI kaarten */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <KpiKaart label="Omzet" waarde={totaalOmzet} kleur="blue" prefix="€" />
-        <KpiKaart label="Kosten" waarde={totaalKosten} kleur="red" prefix="€" />
-        <KpiKaart label="Winst" waarde={totaalOmzet - totaalKosten} kleur="green" prefix="€" />
-        <KpiKaart label="BTW afdracht" waarde={totaalBtw} kleur="purple" prefix="€" />
-        <KpiKaart label="Zakelijke km" waarde={Math.round(totaalKmZak)} kleur="orange" suffix=" km" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+        <KpiKaart label="Omzet" waarde={totaalOmzet} bg="oklch(0.95 0.04 255)" kleur="oklch(0.40 0.22 255)" prefix="€" />
+        <KpiKaart label="Kosten" waarde={totaalKosten} bg="oklch(0.94 0.05 25)" kleur="oklch(0.43 0.20 25)" prefix="€" />
+        <KpiKaart label="Winst" waarde={totaalOmzet - totaalKosten} bg={totaalOmzet >= totaalKosten ? 'oklch(0.94 0.05 145)' : 'oklch(0.94 0.05 25)'} kleur={totaalOmzet >= totaalKosten ? 'oklch(0.35 0.18 145)' : 'oklch(0.43 0.20 25)'} prefix="€" />
+        <KpiKaart label="BTW afdracht" waarde={totaalBtw} bg="oklch(0.95 0.04 290)" kleur="oklch(0.40 0.20 290)" prefix="€" />
+        <KpiKaart label="Zakelijke km" waarde={Math.round(totaalKmZak)} bg="oklch(0.96 0.04 70)" kleur="oklch(0.45 0.18 70)" suffix=" km" />
       </div>
 
       {/* Openstaand alert */}
       {openstaand > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-          <span className="text-amber-600 text-lg">⚠️</span>
-          <p className="text-sm text-amber-800">
+        <div style={{ background: 'oklch(0.96 0.04 70)', border: '1px solid oklch(0.88 0.07 70)', borderRadius: '0.875rem', padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span>⚠️</span>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'oklch(0.42 0.18 70)' }}>
             <strong>€{Math.round(openstaand).toLocaleString('nl-NL')}</strong> aan openstaande facturen
           </p>
         </div>
@@ -161,74 +163,53 @@ export default async function RapportagesPage({
       {/* Export */}
       <ExportKnoppen jaar={jaar} />
 
-      {/* Grafieken (client component) */}
-      <Grafieken
-        perMaand={perMaand}
-        kostenCategorieën={kostenCategorieën}
-        factuurStatus={factuurStatus}
-      />
+      {/* Grafieken */}
+      <Grafieken perMaand={perMaand} kostenCategorieën={kostenCategorieën} factuurStatus={factuurStatus} />
 
       {/* Kwartaaloverzicht tabel */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Kwartaaloverzicht {jaar}</h2>
+      <div style={S.card}>
+        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid oklch(0.95 0.005 255)' }}>
+          <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'oklch(0.20 0.02 255)' }}>Kwartaaloverzicht {jaar}</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="px-6 py-3 text-left">Kwartaal</th>
-                <th className="px-6 py-3 text-right">Omzet</th>
-                <th className="px-6 py-3 text-right">Kosten</th>
-                <th className="px-6 py-3 text-right">Winst</th>
-                <th className="px-6 py-3 text-right">BTW</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {kwartalen.map(kw => (
-                <tr key={kw.kwartaal} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">{kw.kwartaal}</td>
-                  <td className="px-6 py-4 text-right text-gray-700">€{kw.omzet.toLocaleString('nl-NL')}</td>
-                  <td className="px-6 py-4 text-right text-red-600">€{kw.kosten.toLocaleString('nl-NL')}</td>
-                  <td className={`px-6 py-4 text-right font-semibold ${kw.winst >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    €{kw.winst.toLocaleString('nl-NL')}
-                  </td>
-                  <td className="px-6 py-4 text-right text-purple-600">€{kw.btw.toLocaleString('nl-NL')}</td>
-                </tr>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+          <thead>
+            <tr>
+              {['Kwartaal', 'Omzet', 'Kosten', 'Winst', 'BTW'].map((h, i) => (
+                <th key={h} style={{ ...S.th, textAlign: i === 0 ? 'left' : 'right' }}>{h}</th>
               ))}
-              {/* Totaalrij */}
-              <tr className="bg-gray-50 font-semibold">
-                <td className="px-6 py-4 text-gray-900">Totaal {jaar}</td>
-                <td className="px-6 py-4 text-right text-gray-900">€{Math.round(totaalOmzet).toLocaleString('nl-NL')}</td>
-                <td className="px-6 py-4 text-right text-red-700">€{Math.round(totaalKosten).toLocaleString('nl-NL')}</td>
-                <td className={`px-6 py-4 text-right ${(totaalOmzet - totaalKosten) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  €{Math.round(totaalOmzet - totaalKosten).toLocaleString('nl-NL')}
-                </td>
-                <td className="px-6 py-4 text-right text-purple-700">€{Math.round(totaalBtw).toLocaleString('nl-NL')}</td>
+            </tr>
+          </thead>
+          <tbody>
+            {kwartalen.map(kw => (
+              <tr key={kw.kwartaal}>
+                <td style={{ ...S.td, fontWeight: 600 }}>{kw.kwartaal}</td>
+                <td style={{ ...S.td, textAlign: 'right' }}>€{kw.omzet.toLocaleString('nl-NL')}</td>
+                <td style={{ ...S.td, textAlign: 'right', color: 'oklch(0.43 0.20 25)' }}>€{kw.kosten.toLocaleString('nl-NL')}</td>
+                <td style={{ ...S.td, textAlign: 'right', fontWeight: 600, color: kw.winst >= 0 ? 'oklch(0.35 0.18 145)' : 'oklch(0.43 0.20 25)' }}>€{kw.winst.toLocaleString('nl-NL')}</td>
+                <td style={{ ...S.td, textAlign: 'right', color: 'oklch(0.40 0.20 290)' }}>€{kw.btw.toLocaleString('nl-NL')}</td>
               </tr>
-            </tbody>
-          </table>
-        </div>
+            ))}
+            <tr style={{ background: 'oklch(0.97 0.007 255)' }}>
+              <td style={{ ...S.td, fontWeight: 700, color: 'oklch(0.13 0.02 255)' }}>Totaal {jaar}</td>
+              <td style={{ ...S.td, textAlign: 'right', fontWeight: 700 }}>€{Math.round(totaalOmzet).toLocaleString('nl-NL')}</td>
+              <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, color: 'oklch(0.43 0.20 25)' }}>€{Math.round(totaalKosten).toLocaleString('nl-NL')}</td>
+              <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, color: (totaalOmzet - totaalKosten) >= 0 ? 'oklch(0.35 0.18 145)' : 'oklch(0.43 0.20 25)' }}>€{Math.round(totaalOmzet - totaalKosten).toLocaleString('nl-NL')}</td>
+              <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, color: 'oklch(0.40 0.20 290)' }}>€{Math.round(totaalBtw).toLocaleString('nl-NL')}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
-function KpiKaart({ label, waarde, kleur, prefix = '', suffix = '' }: {
-  label: string; waarde: number; kleur: string; prefix?: string; suffix?: string
+function KpiKaart({ label, waarde, bg, kleur, prefix = '', suffix = '' }: {
+  label: string; waarde: number; bg: string; kleur: string; prefix?: string; suffix?: string
 }) {
-  const kleuren: Record<string, string> = {
-    blue:   'bg-blue-50 text-blue-700 border-blue-100',
-    red:    'bg-red-50 text-red-700 border-red-100',
-    green:  'bg-green-50 text-green-700 border-green-100',
-    purple: 'bg-purple-50 text-purple-700 border-purple-100',
-    orange: 'bg-orange-50 text-orange-700 border-orange-100',
-  }
   return (
-    <div className={`rounded-xl border p-4 ${kleuren[kleur] ?? kleuren['blue']}`}>
-      <p className="text-xs font-medium opacity-70 mb-1">{label}</p>
-      <p className="text-xl font-bold">
+    <div style={{ background: bg, borderRadius: '0.875rem', padding: '1rem 1.25rem', border: '1px solid oklch(0 0 0 / 0.06)' }}>
+      <p style={{ fontSize: '0.72rem', fontWeight: 700, color: kleur, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.5rem', opacity: 0.8 }}>{label}</p>
+      <p style={{ fontSize: '1.375rem', fontWeight: 800, color: kleur, margin: 0 }}>
         {prefix}{Math.abs(Math.round(waarde)).toLocaleString('nl-NL')}{suffix}
       </p>
     </div>

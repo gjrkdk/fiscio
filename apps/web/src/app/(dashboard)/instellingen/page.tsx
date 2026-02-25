@@ -17,11 +17,13 @@ export default async function InstellingenPage() {
     .limit(1)
 
   return (
-    <div className="max-w-2xl">
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">Instellingen</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Je gegevens worden gebruikt op facturen en in het administratiesysteem.
-      </p>
+    <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: '0' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Instellingen</h1>
+        <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>
+          Je gegevens worden gebruikt op facturen en in het administratiesysteem.
+        </p>
+      </div>
       <InstellingenForm profiel={profiel ?? null} email={user.email ?? ''} />
     </div>
   )

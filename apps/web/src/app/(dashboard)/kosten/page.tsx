@@ -44,48 +44,52 @@ export default async function KostenPage() {
   const totaalBtw = parseFloat(stats?.totaalBtw ?? '0') || 0
   const totaalIncl = totaalExcl + totaalBtw
 
+  const S = {
+    th: { padding: '0.75rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'oklch(0.55 0.015 255)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', background: 'oklch(0.98 0.003 255)', textAlign: 'left' as const },
+    td: { padding: '0.875rem 1.25rem', fontSize: '0.875rem', color: 'oklch(0.20 0.02 255)', borderBottom: '1px solid oklch(0.96 0.005 255)' },
+  }
+
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Kosten</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Bonnetjes en zakelijke uitgaven</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Kosten</h1>
+          <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>Bonnetjes en zakelijke uitgaven</p>
         </div>
         <BonToevoegenModal />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
         <StatCard label="Totaal excl. BTW" waarde={euro(totaalExcl.toString())} icon="🧾" kleur="orange" />
         <StatCard label="Voorbelasting BTW" waarde={euro(totaalBtw.toString())} icon="↩️" kleur="purple" />
         <StatCard label="Totaal incl. BTW" waarde={euro(totaalIncl.toString())} icon="💳" kleur="blue" />
       </div>
 
       {/* Tabel */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 1px 4px oklch(0 0 0 / 0.04)', overflow: 'hidden' }}>
         {bonnen.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">
-            <p className="text-4xl mb-3">🧾</p>
-            <p className="font-medium text-gray-500">Nog geen bonnetjes</p>
-            <p className="text-sm mt-1">Voeg je eerste uitgave toe</p>
+          <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '3rem', margin: '0 0 0.75rem' }}>🧾</p>
+            <p style={{ fontWeight: 700, color: 'oklch(0.30 0.02 255)', margin: '0 0 0.375rem' }}>Nog geen bonnetjes</p>
+            <p style={{ fontSize: '0.875rem', color: 'oklch(0.55 0.015 255)', margin: 0 }}>Voeg je eerste uitgave toe</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Datum</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Leverancier</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Categorie</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Omschrijving</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Excl. BTW</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">BTW</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Incl. BTW</th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">Foto</th>
-                <th className="px-4 py-3"></th>
+              <tr>
+                {[
+                  { label: 'Datum', align: 'left' }, { label: 'Leverancier', align: 'left' },
+                  { label: 'Categorie', align: 'left' }, { label: 'Omschrijving', align: 'left' },
+                  { label: 'Excl. BTW', align: 'right' }, { label: 'BTW', align: 'right' },
+                  { label: 'Incl. BTW', align: 'right' }, { label: 'Foto', align: 'center' }, { label: '', align: 'left' },
+                ].map(h => (
+                  <th key={h.label} style={{ ...S.th, textAlign: h.align as 'left' | 'right' | 'center' }}>{h.label}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {bonnen.map((bon) => {
                 const excl = parseFloat(bon.amount ?? '0')
                 const btw = parseFloat(bon.vatAmount ?? '0')
@@ -94,37 +98,31 @@ export default async function KostenPage() {
                   ? new Date(bon.receiptDate).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })
                   : '-'
                 return (
-                  <tr key={bon.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{datum}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{bon.vendor}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
+                  <tr key={bon.id}>
+                    <td style={{ ...S.td, color: 'oklch(0.55 0.015 255)', whiteSpace: 'nowrap' }}>{datum}</td>
+                    <td style={{ ...S.td, fontWeight: 600 }}>{bon.vendor}</td>
+                    <td style={S.td}>
+                      <span style={{ display: 'inline-block', padding: '0.15rem 0.625rem', borderRadius: '2rem', fontSize: '0.75rem', background: 'oklch(0.95 0.005 255)', color: 'oklch(0.40 0.02 255)' }}>
                         {CATEGORIE_LABELS[bon.category ?? ''] ?? bon.category}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{bon.description ?? '-'}</td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-900">{euro(excl.toString())}</td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-500">
+                    <td style={{ ...S.td, color: 'oklch(0.55 0.015 255)' }}>{bon.description ?? '—'}</td>
+                    <td style={{ ...S.td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{euro(excl.toString())}</td>
+                    <td style={{ ...S.td, textAlign: 'right', color: 'oklch(0.55 0.015 255)', fontVariantNumeric: 'tabular-nums' }}>
                       {euro(btw.toString())}
-                      <span className="text-xs text-gray-400 ml-1">({bon.vatRate}%)</span>
+                      <span style={{ fontSize: '0.72rem', color: 'oklch(0.65 0.01 255)', marginLeft: '0.25rem' }}>({bon.vatRate}%)</span>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">{euro(incl.toString())}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{euro(incl.toString())}</td>
+                    <td style={{ ...S.td, textAlign: 'center' }}>
                       {bon.imageUrl ? (
-                        <a
-                          href={`/api/kosten/foto?pad=${encodeURIComponent(bon.imageUrl)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700 text-base"
-                          title="Bonnetje bekijken"
-                        >
+                        <a href={`/api/kosten/foto?pad=${encodeURIComponent(bon.imageUrl)}`} target="_blank" rel="noopener noreferrer" title="Bonnetje bekijken" style={{ textDecoration: 'none', fontSize: '1rem' }}>
                           🧾
                         </a>
                       ) : (
-                        <span className="text-gray-300 text-base">—</span>
+                        <span style={{ color: 'oklch(0.80 0.01 255)' }}>—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td style={S.td}>
                       <BonVerwijderenKnop id={bon.id} />
                     </td>
                   </tr>

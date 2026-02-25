@@ -70,91 +70,95 @@ export default async function BtwPage({ searchParams }: Props) {
     '', 'vóór 30 april', 'vóór 31 juli', 'vóór 31 oktober', 'vóór 31 januari',
   ][kwartaal] ?? ''
 
+  const card = { background: 'white', borderRadius: '1rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 1px 4px oklch(0 0 0 / 0.04)', overflow: 'hidden' as const }
+  const saldoPositief = saldo > 0
+
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">BTW-aangifte</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Kwartaaloverzicht voor de Belastingdienst</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>BTW-aangifte</h1>
+          <p style={{ fontSize: '0.85rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.25rem' }}>Kwartaaloverzicht voor de Belastingdienst</p>
         </div>
         <BtwKwartaalSelector jaar={jaar} kwartaal={kwartaal} />
       </div>
 
       {/* Deadline banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
-        <span className="text-amber-500 text-lg">📅</span>
+      <div style={{ background: 'oklch(0.96 0.04 70)', border: '1px solid oklch(0.88 0.07 70)', borderRadius: '0.875rem', padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <span style={{ fontSize: '1.25rem' }}>📅</span>
         <div>
-          <p className="text-sm font-medium text-amber-800">{kwartaalNaam} — aangifte {aangifteDeadline}</p>
-          <p className="text-xs text-amber-600">Dien je aangifte in via Mijn Belastingdienst Zakelijk</p>
+          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'oklch(0.42 0.18 70)' }}>{kwartaalNaam} — aangifte {aangifteDeadline}</p>
+          <p style={{ margin: 0, fontSize: '0.78rem', color: 'oklch(0.55 0.15 70)', marginTop: '0.125rem' }}>Dien je aangifte in via Mijn Belastingdienst Zakelijk</p>
         </div>
       </div>
 
       {/* Omzetoverzicht */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Omzetoverzicht {kwartaalNaam}</h3>
+      <div style={card}>
+        <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid oklch(0.95 0.005 255)' }}>
+          <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'oklch(0.20 0.02 255)' }}>Omzetoverzicht {kwartaalNaam}</h3>
         </div>
-        <div className="divide-y divide-gray-50">
-          {[
-            { label: 'Omzet excl. BTW (1a)', value: omzet, desc: 'Totaal gefactureerd bedrag' },
-            { label: 'Verschuldigde BTW (1b)', value: btwOntvangen, desc: 'BTW op uitgaande facturen' },
-          ].map(row => (
-            <div key={row.label} className="flex items-center justify-between px-5 py-4">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{row.label}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{row.desc}</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900 font-mono">{euro(row.value)}</p>
+        {[
+          { label: 'Omzet excl. BTW (1a)', value: omzet, desc: 'Totaal gefactureerd bedrag' },
+          { label: 'Verschuldigde BTW (1b)', value: btwOntvangen, desc: 'BTW op uitgaande facturen' },
+        ].map((row, i) => (
+          <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: i === 0 ? '1px solid oklch(0.96 0.005 255)' : 'none' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'oklch(0.20 0.02 255)' }}>{row.label}</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'oklch(0.60 0.01 255)', marginTop: '0.125rem' }}>{row.desc}</p>
             </div>
-          ))}
-        </div>
+            <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', fontVariantNumeric: 'tabular-nums' }}>{euro(row.value)}</p>
+          </div>
+        ))}
       </div>
 
       {/* Voorbelasting */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Voorbelasting (aftrekbare BTW)</h3>
+      <div style={card}>
+        <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid oklch(0.95 0.005 255)' }}>
+          <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'oklch(0.20 0.02 255)' }}>Voorbelasting (aftrekbare BTW)</h3>
         </div>
-        <div className="divide-y divide-gray-50">
-          {[
-            { label: 'Kosten excl. BTW', value: kostenExcl, desc: 'Totaal zakelijke uitgaven' },
-            { label: 'Betaalde BTW (5b)', value: btwBetaald, desc: 'BTW op inkopen en kosten' },
-          ].map(row => (
-            <div key={row.label} className="flex items-center justify-between px-5 py-4">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{row.label}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{row.desc}</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900 font-mono">{euro(row.value)}</p>
+        {[
+          { label: 'Kosten excl. BTW', value: kostenExcl, desc: 'Totaal zakelijke uitgaven' },
+          { label: 'Betaalde BTW (5b)', value: btwBetaald, desc: 'BTW op inkopen en kosten' },
+        ].map((row, i) => (
+          <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: i === 0 ? '1px solid oklch(0.96 0.005 255)' : 'none' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'oklch(0.20 0.02 255)' }}>{row.label}</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'oklch(0.60 0.01 255)', marginTop: '0.125rem' }}>{row.desc}</p>
             </div>
-          ))}
-        </div>
+            <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', fontVariantNumeric: 'tabular-nums' }}>{euro(row.value)}</p>
+          </div>
+        ))}
       </div>
 
       {/* Saldo */}
-      <div className={`rounded-xl border-2 p-6 ${saldo > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-        <div className="flex items-center justify-between">
+      <div style={{
+        borderRadius: '1rem', padding: '1.5rem',
+        border: `2px solid ${saldoPositief ? 'oklch(0.80 0.10 25)' : 'oklch(0.80 0.10 145)'}`,
+        background: saldoPositief ? 'oklch(0.96 0.03 25)' : 'oklch(0.96 0.03 145)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p className={`text-sm font-medium ${saldo > 0 ? 'text-red-700' : 'text-green-700'}`}>
-              {saldo > 0 ? 'Te betalen BTW (rubriek 5c)' : 'Te ontvangen BTW (teruggaaf)'}
+            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: saldoPositief ? 'oklch(0.40 0.20 25)' : 'oklch(0.35 0.18 145)' }}>
+              {saldoPositief ? '🔴 Te betalen BTW (rubriek 5c)' : '🟢 Te ontvangen BTW (teruggaaf)'}
             </p>
-            <p className={`text-xs mt-0.5 ${saldo > 0 ? 'text-red-500' : 'text-green-500'}`}>
-              {saldo > 0
-                ? `Verschuldigde BTW minus voorbelasting`
-                : `Meer voorbelasting dan verschuldigde BTW`}
+            <p style={{ margin: 0, fontSize: '0.78rem', marginTop: '0.25rem', color: saldoPositief ? 'oklch(0.55 0.15 25)' : 'oklch(0.50 0.15 145)' }}>
+              {saldoPositief ? 'Verschuldigde BTW minus voorbelasting' : 'Meer voorbelasting dan verschuldigde BTW'}
             </p>
           </div>
-          <p className={`text-2xl font-bold font-mono ${saldo > 0 ? 'text-red-700' : 'text-green-700'}`}>
+          <p style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: saldoPositief ? 'oklch(0.40 0.20 25)' : 'oklch(0.35 0.18 145)', fontVariantNumeric: 'tabular-nums' }}>
             {euro(Math.abs(saldo))}
           </p>
         </div>
       </div>
 
-      {/* Exportknop */}
-      <a
-        href={`/api/btw/export?jaar=${jaar}&kwartaal=${kwartaal}`}
-        className="flex items-center gap-2 w-fit px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-      >
+      {/* Export */}
+      <a href={`/api/btw/export?jaar=${jaar}&kwartaal=${kwartaal}`} style={{
+        display: 'inline-flex', alignItems: 'center', gap: '0.5rem', width: 'fit-content',
+        padding: '0.625rem 1.25rem', border: '1.5px solid oklch(0.88 0.01 255)',
+        borderRadius: '0.625rem', fontSize: '0.875rem', fontWeight: 600,
+        color: 'oklch(0.40 0.02 255)', textDecoration: 'none', background: 'white',
+      }}>
         ↓ Exporteren als CSV
       </a>
     </div>

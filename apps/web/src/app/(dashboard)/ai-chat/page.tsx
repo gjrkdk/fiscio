@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Message = {
@@ -19,19 +19,17 @@ const SUGGESTIES = [
   "Is een BV interessant voor mij?",
 ];
 
-function EngineLabel({ engine }: { engine: "perplexity" | "openai" }) {
+function EngineLabel({ engine }: { engine?: "perplexity" | "openai" }) {
   if (!engine) return null;
+  const isPerplexity = engine === "perplexity";
   return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-        engine === "perplexity"
-          ? "bg-purple-100 text-purple-700"
-          : "bg-blue-100 text-blue-700"
-      }`}
-    >
-      {engine === "perplexity"
-        ? "🔍 Perplexity — actuele wetgeving"
-        : "🧠 GPT-4o — persoonlijk advies"}
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+      fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '2rem', fontWeight: 600,
+      background: isPerplexity ? 'oklch(0.94 0.04 290)' : 'oklch(0.94 0.04 255)',
+      color: isPerplexity ? 'oklch(0.38 0.18 290)' : 'oklch(0.38 0.18 255)',
+    }}>
+      {isPerplexity ? "🔍 Perplexity — actuele wetgeving" : "🧠 GPT-4o — persoonlijk advies"}
     </span>
   );
 }
@@ -39,50 +37,46 @@ function EngineLabel({ engine }: { engine: "perplexity" | "openai" }) {
 function Bericht({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
   return (
-    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
-      <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 ${
-          isUser ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
-        }`}
-      >
+    <div style={{ display: 'flex', gap: '0.75rem', flexDirection: isUser ? 'row-reverse' : 'row', alignItems: 'flex-end' }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', fontSize: '0.875rem', flexShrink: 0,
+        background: isUser ? 'oklch(0.52 0.21 255)' : 'oklch(0.94 0.005 255)',
+        color: isUser ? 'white' : 'oklch(0.40 0.02 255)',
+      }}>
         {isUser ? "👤" : "🤖"}
       </div>
-      <div
-        className={`max-w-[80%] ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}
-      >
+      <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
         {!isUser && msg.engine && <EngineLabel engine={msg.engine} />}
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-            isUser
-              ? "bg-blue-600 text-white rounded-tr-sm"
-              : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm"
-          }`}
-        >
+        <div style={{
+          borderRadius: '1rem',
+          borderTopRightRadius: isUser ? '0.25rem' : '1rem',
+          borderTopLeftRadius: isUser ? '1rem' : '0.25rem',
+          padding: '0.75rem 1rem',
+          fontSize: '0.875rem', lineHeight: 1.6,
+          background: isUser ? 'oklch(0.52 0.21 255)' : 'white',
+          color: isUser ? 'white' : 'oklch(0.20 0.02 255)',
+          border: isUser ? 'none' : '1px solid oklch(0.91 0.01 255)',
+          boxShadow: '0 1px 3px oklch(0 0 0 / 0.06)',
+        }}>
           {msg.laden ? (
-            <span className="flex gap-1 items-center h-5">
-              <span
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              />
-              <span
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              />
-              <span
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              />
+            <span style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', height: 20 }}>
+              {[0, 150, 300].map(delay => (
+                <span key={delay} style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: 'oklch(0.65 0.01 255)',
+                  animation: 'bounce 1s infinite',
+                  animationDelay: `${delay}ms`,
+                }} />
+              ))}
             </span>
           ) : (
             <span
-              className="whitespace-pre-wrap"
+              style={{ whiteSpace: 'pre-wrap' }}
               dangerouslySetInnerHTML={{
                 __html: msg.content
                   .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                  .replace(
-                    /\[(.*?)\]\((.*?)\)/g,
-                    '<a href="$2" target="_blank" class="underline">$1</a>',
-                  )
+                  .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="text-decoration:underline">$1</a>')
                   .replace(/^#{1,3} (.+)/gm, "<strong>$1</strong>")
                   .replace(/^- (.+)/gm, "• $1"),
               }}
@@ -98,8 +92,7 @@ export default function AIChatPage() {
   const [berichten, setBerichten] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hallo! Ik ben Fiscio AI — jouw persoonlijke belastingadviseur. Ik ken jouw financiële data en kan vragen beantwoorden over jouw specifieke situatie én over actuele belastingregels.\n\nWaar kan ik je mee helpen?",
+      content: "Hallo! Ik ben Fiscio AI — jouw persoonlijke belastingadviseur. Ik ken jouw financiële data en kan vragen beantwoorden over jouw specifieke situatie én over actuele belastingregels.\n\nWaar kan ik je mee helpen?",
       engine: "openai",
     },
   ]);
@@ -115,40 +108,29 @@ export default function AIChatPage() {
   async function stuurBericht(tekst?: string) {
     const vraag = (tekst ?? invoer).trim();
     if (!vraag || bezig) return;
-
     setInvoer("");
     setBezig(true);
-
     const userMsg: Message = { role: "user", content: vraag };
     const loadMsg: Message = { role: "assistant", content: "", laden: true };
-
-    setBerichten((prev) => [...prev, userMsg, loadMsg]);
+    setBerichten(prev => [...prev, userMsg, loadMsg]);
 
     try {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) throw new Error("Niet ingelogd");
 
-      const history = berichten
-        .filter((b) => !b.laden)
-        .map((b) => ({ role: b.role, content: b.content }));
+      const history = berichten.filter(b => !b.laden).map(b => ({ role: b.role, content: b.content }));
 
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ message: vraag, history }),
       });
 
       if (!res.body) throw new Error("Geen response");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-
       let antwoord = "";
       let engine: "perplexity" | "openai" = "openai";
 
@@ -165,30 +147,19 @@ export default function AIChatPage() {
             if (json.engine) engine = json.engine;
             if (json.token) {
               antwoord += json.token;
-              setBerichten((prev) => {
+              setBerichten(prev => {
                 const nieuw = [...prev];
-                nieuw[nieuw.length - 1] = {
-                  role: "assistant",
-                  content: antwoord,
-                  engine,
-                  laden: false,
-                };
+                nieuw[nieuw.length - 1] = { role: "assistant", content: antwoord, engine, laden: false };
                 return nieuw;
               });
             }
-          } catch {
-            /* skip */
-          }
+          } catch { /* skip */ }
         }
       }
-    } catch (e) {
-      setBerichten((prev) => {
+    } catch {
+      setBerichten(prev => {
         const nieuw = [...prev];
-        nieuw[nieuw.length - 1] = {
-          role: "assistant",
-          content: "Er ging iets mis. Probeer het opnieuw.",
-          laden: false,
-        };
+        nieuw[nieuw.length - 1] = { role: "assistant", content: "Er ging iets mis. Probeer het opnieuw.", laden: false };
         return nieuw;
       });
     } finally {
@@ -198,43 +169,35 @@ export default function AIChatPage() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      stuurBericht();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); stuurBericht(); }
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto">
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)', maxWidth: 780, margin: '0 auto' }}>
       {/* Header */}
-      <div className="border-b border-gray-200 px-4 py-3 bg-white">
-        <h1 className="text-lg font-bold text-gray-900">
-          Fiscio AI — Belastingadviseur
-        </h1>
-        <p className="text-xs text-gray-500">
-          Persoonlijk advies via GPT-4o · Actuele wetgeving via Perplexity Sonar
-          Pro
+      <div style={{ borderBottom: '1px solid oklch(0.91 0.01 255)', padding: '0.875rem 1.25rem', background: 'white', flexShrink: 0 }}>
+        <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', margin: 0 }}>Fiscio AI — Belastingadviseur</h1>
+        <p style={{ fontSize: '0.775rem', color: 'oklch(0.55 0.015 255)', marginTop: '0.125rem' }}>
+          Persoonlijk advies via GPT-4o · Actuele wetgeving via Perplexity Sonar Pro
         </p>
       </div>
 
       {/* Berichten */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-gray-50">
-        {berichten.map((msg, i) => (
-          <Bericht key={i} msg={msg} />
-        ))}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'oklch(0.98 0.003 255)' }}>
+        {berichten.map((msg, i) => <Bericht key={i} msg={msg} />)}
         <div ref={onderRef} />
       </div>
 
       {/* Suggesties */}
       {berichten.length <= 1 && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTIES.map((s) => (
-              <button
-                key={s}
-                onClick={() => stuurBericht(s)}
-                className="text-xs bg-white border border-gray-200 rounded-full px-3 py-1.5 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition"
-              >
+        <div style={{ padding: '0.75rem 1.25rem', background: 'oklch(0.98 0.003 255)', borderTop: '1px solid oklch(0.94 0.005 255)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {SUGGESTIES.map(s => (
+              <button key={s} onClick={() => stuurBericht(s)} style={{
+                fontSize: '0.775rem', background: 'white', border: '1px solid oklch(0.91 0.01 255)',
+                borderRadius: '2rem', padding: '0.375rem 0.875rem', color: 'oklch(0.40 0.02 255)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}>
                 {s}
               </button>
             ))}
@@ -243,30 +206,37 @@ export default function AIChatPage() {
       )}
 
       {/* Input */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
-        <div className="flex gap-3 items-end">
+      <div style={{ borderTop: '1px solid oklch(0.91 0.01 255)', background: 'white', padding: '0.875rem 1.25rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
           <textarea
             ref={inputRef}
             value={invoer}
-            onChange={(e) => setInvoer(e.target.value)}
+            onChange={e => setInvoer(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Stel een vraag over jouw belastingen..."
             rows={1}
-            className="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            style={{ maxHeight: "120px" }}
+            style={{
+              flex: 1, resize: 'none', border: '1.5px solid oklch(0.88 0.01 255)', borderRadius: '0.75rem',
+              padding: '0.625rem 1rem', fontSize: '0.875rem', outline: 'none', maxHeight: 120,
+              fontFamily: 'inherit', color: 'oklch(0.20 0.02 255)', background: 'oklch(0.99 0.003 255)',
+            }}
             disabled={bezig}
           />
           <button
             onClick={() => stuurBericht()}
             disabled={!invoer.trim() || bezig}
-            className="bg-blue-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 transition shrink-0"
+            style={{
+              background: 'oklch(0.52 0.21 255)', color: 'white', border: 'none',
+              borderRadius: '0.75rem', padding: '0.625rem 1.25rem', fontSize: '0.875rem',
+              fontWeight: 700, cursor: invoer.trim() && !bezig ? 'pointer' : 'not-allowed',
+              opacity: !invoer.trim() || bezig ? 0.4 : 1, flexShrink: 0, fontFamily: 'inherit',
+            }}
           >
             {bezig ? "..." : "Stuur →"}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          Indicatief advies — geen vervanging voor een officiële
-          belastingadviseur
+        <p style={{ fontSize: '0.72rem', color: 'oklch(0.65 0.01 255)', textAlign: 'center', marginTop: '0.5rem' }}>
+          Indicatief advies — geen vervanging voor een officiële belastingadviseur
         </p>
       </div>
     </div>

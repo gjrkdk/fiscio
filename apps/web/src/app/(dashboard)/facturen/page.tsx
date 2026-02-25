@@ -25,78 +25,71 @@ export default async function FacturenPage() {
   const openstaand = facturen.filter(f => f.status === 'sent')
   const totaalOpenstaand = openstaand.reduce((sum, f) => sum + parseFloat(f.total ?? '0'), 0)
 
+  const S = {
+    th: { padding: '0.75rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'oklch(0.55 0.015 255)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', background: 'oklch(0.98 0.003 255)', textAlign: 'left' as const },
+    td: { padding: '0.875rem 1.25rem', fontSize: '0.875rem', color: 'oklch(0.20 0.02 255)', borderBottom: '1px solid oklch(0.96 0.005 255)' },
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Facturen</h2>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'oklch(0.13 0.02 255)', letterSpacing: '-0.02em', margin: 0 }}>Facturen</h1>
           {openstaand.length > 0 && (
-            <p className="text-sm text-amber-600 mt-0.5">
+            <p style={{ fontSize: '0.85rem', color: 'oklch(0.45 0.18 70)', marginTop: '0.25rem' }}>
               {openstaand.length} openstaande factuur{openstaand.length !== 1 ? 'en' : ''} · {euro(totaalOpenstaand.toString())}
             </p>
           )}
         </div>
-        <Link
-          href="/facturen/nieuw"
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <Link href="/facturen/nieuw" style={{
+          padding: '0.625rem 1.25rem', background: 'oklch(0.52 0.21 255)', color: 'white',
+          borderRadius: '0.625rem', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none',
+          boxShadow: '0 2px 8px oklch(0.52 0.21 255 / 0.25)',
+        }}>
           + Nieuwe factuur
         </Link>
       </div>
 
-      {/* Lijst */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid oklch(0.91 0.01 255)', boxShadow: '0 1px 4px oklch(0 0 0 / 0.04)', overflow: 'hidden' }}>
         {facturen.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">
-            <p className="text-4xl mb-3">📄</p>
-            <p className="font-medium text-gray-500">Nog geen facturen</p>
-            <p className="text-sm mt-1">Maak je eerste factuur aan</p>
+          <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '3rem', margin: '0 0 0.75rem' }}>📄</p>
+            <p style={{ fontWeight: 700, color: 'oklch(0.30 0.02 255)', margin: '0 0 0.375rem' }}>Nog geen facturen</p>
+            <p style={{ fontSize: '0.875rem', color: 'oklch(0.55 0.015 255)', margin: 0 }}>Maak je eerste factuur aan</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Nummer</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Klant</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Datum</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Vervaldatum</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Bedrag</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Status</th>
-                <th className="px-4 py-3"></th>
+              <tr>
+                {['Nummer', 'Klant', 'Datum', 'Vervaldatum', 'Bedrag', 'Status', ''].map((h, i) => (
+                  <th key={i} style={{ ...S.th, textAlign: h === 'Bedrag' ? 'right' : 'left' }}>{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {facturen.map(f => {
-                const datum = f.createdAt
-                  ? new Date(f.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                  : '-'
-                const verval = f.dueDate
-                  ? new Date(f.dueDate).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                  : '-'
+                const datum = f.createdAt ? new Date(f.createdAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'
+                const verval = f.dueDate ? new Date(f.dueDate).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'
                 const isVervallen = f.status === 'sent' && f.dueDate && new Date(f.dueDate) < new Date()
                 return (
-                  <tr key={f.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-gray-700">{f.invoiceNumber}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{f.clientName}</td>
-                    <td className="px-4 py-3 text-gray-500">{datum}</td>
-                    <td className={`px-4 py-3 ${isVervallen ? 'text-red-500 font-medium' : 'text-gray-500'}`}>{verval}</td>
-                    <td className="px-4 py-3 text-right font-mono font-medium text-gray-900">{euro(f.total)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                  <tr key={f.id}>
+                    <td style={{ ...S.td, fontFamily: 'monospace', color: 'oklch(0.40 0.02 255)' }}>{f.invoiceNumber}</td>
+                    <td style={{ ...S.td, fontWeight: 600 }}>{f.clientName}</td>
+                    <td style={{ ...S.td, color: 'oklch(0.55 0.015 255)' }}>{datum}</td>
+                    <td style={{ ...S.td, color: isVervallen ? 'oklch(0.43 0.20 25)' : 'oklch(0.55 0.015 255)', fontWeight: isVervallen ? 600 : 400 }}>{verval}</td>
+                    <td style={{ ...S.td, textAlign: 'right', fontWeight: 700 }}>{euro(f.total)}</td>
+                    <td style={S.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <StatusBadge status={f.status} />
                         {f.reminderSentAt && (
-                          <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full whitespace-nowrap" title={`Herinnering verstuurd op ${new Date(f.reminderSentAt).toLocaleDateString('nl-NL')}`}>
+                          <span style={{ fontSize: '0.7rem', color: 'oklch(0.45 0.18 70)', background: 'oklch(0.95 0.04 70)', padding: '0.15rem 0.5rem', borderRadius: '2rem', whiteSpace: 'nowrap' }}>
                             🔔 herinnering
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/facturen/${f.id}`}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
+                    <td style={S.td}>
+                      <Link href={`/facturen/${f.id}`} style={{ fontSize: '0.8rem', color: 'oklch(0.52 0.21 255)', textDecoration: 'none', fontWeight: 600 }}>
                         Bekijk →
                       </Link>
                     </td>
