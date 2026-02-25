@@ -1,5 +1,6 @@
 import { pgTable, uuid, text, timestamp, decimal, boolean } from 'drizzle-orm/pg-core'
 import { users } from './users'
+import { vector } from './vector'
 
 export const trips = pgTable('trips', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -18,6 +19,7 @@ export const trips = pgTable('trips', {
   aiReason: text('ai_reason'),
   aiConfidence: decimal('ai_confidence', { precision: 3, scale: 2 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  embedding: vector('embedding'),
 })
 
 export type Trip = typeof trips.$inferSelect

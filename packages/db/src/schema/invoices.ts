@@ -1,5 +1,6 @@
 import { pgTable, uuid, text, timestamp, decimal, jsonb } from 'drizzle-orm/pg-core'
 import { users } from './users'
+import { vector } from './vector'
 
 export type InvoiceLineItem = {
   description: string
@@ -34,6 +35,7 @@ export const invoices = pgTable('invoices', {
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  embedding: vector('embedding'),
 })
 
 export type Invoice = typeof invoices.$inferSelect

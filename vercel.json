@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/factuur-herinnering",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/embeddings",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

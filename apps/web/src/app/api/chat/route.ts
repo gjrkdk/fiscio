@@ -5,6 +5,7 @@ import { invoices, receipts, trips, users } from '@fiscio/db'
 import { eq, and, gte, desc } from 'drizzle-orm'
 import { metAILog } from '@/lib/aiLogger'
 import { berekenTips } from '@/lib/belastingtips'
+import { semantischZoeken } from '@/lib/embeddings'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type ChatMessage = { role: 'user' | 'assistant'; content: string }
@@ -341,10 +342,19 @@ export async function POST(req: NextRequest) {
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ engine })}\n\n`))
 
       try {
-        const context = await getUserContext(user.id)
+        const [context, relevanteData] = await Promise.all([
+          getUserContext(user.id),
+          semantischZoeken(user.id, message).catch(() => []),
+        ])
+
+        // Voeg semantisch gevonden data toe aan context
+        const contextMetZoekresultaten = relevanteData.length > 0
+          ? `${context}\n\n### Meest relevante data bij deze vraag (semantisch gezocht)\n${relevanteData.map(r => `- [${r.type}] ${r.tekst}${r.datum ? ` (${r.datum.slice(0, 10)})` : ''}`).join('\n')}`
+          : context
+
         const generator = engine === 'perplexity' && perplexityKey
-          ? streamPerplexityMetImpact(messages, context, perplexityKey, openaiKey)
-          : streamOpenAI(messages, context, openaiKey)
+          ? streamPerplexityMetImpact(messages, contextMetZoekresultaten, perplexityKey, openaiKey)
+          : streamOpenAI(messages, contextMetZoekresultaten, openaiKey)
 
         await metAILog(
           { userId: user.id, provider: 'openai', callType: 'chat', dataCategories: ['chat_vraag'], anonymized: true },

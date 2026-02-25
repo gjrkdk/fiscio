@@ -1,5 +1,6 @@
 import { pgTable, uuid, text, timestamp, decimal, jsonb } from 'drizzle-orm/pg-core'
 import { users } from './users'
+import { vector } from './vector'
 
 export const receipts = pgTable('receipts', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -16,6 +17,7 @@ export const receipts = pgTable('receipts', {
   imageUrl: text('image_url'),
   ocrData: jsonb('ocr_data'), // raw OCR output
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  embedding: vector('embedding'),
 })
 
 export type Receipt = typeof receipts.$inferSelect
